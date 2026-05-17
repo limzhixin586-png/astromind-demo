@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AstroMind 测试版</title>
+  <style>
+    :root {
+      --bg: #050816;
+      --panel: rgba(255,255,255,.08);
+      --line: rgba(255,255,255,.14);
+      --text: #fbf7ff;
+      --muted: #c4b5fd;
+      --gold: #f5d28a;
+      --purple: #8b5cf6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(139,92,246,.35), transparent 30%),
+        radial-gradient(circle at 82% 18%, rgba(245,210,138,.18), transparent 24%),
+        linear-gradient(135deg, #050816, #0b1026 55%, #160d32);
+      overflow-x: hidden;
+    }
+    body:before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.82) 1px, transparent 1px),
+        radial-gradient(circle, rgba(245,210,138,.55) 1px, transparent 1px);
+      background-size: 58px 58px, 91px 91px;
+      opacity: .28;
+    }
+    .wrap { width: min(1120px, calc(100% - 32px)); margin: 0 auto; position: relative; z-index: 1; }
+    .nav { display: flex; justify-content: space-between; align-items: center; padding: 22px 0; }
+    .brand { color: var(--gold); font-weight: 800; letter-spacing: .2px; }
+    .hero { min-height: calc(100vh - 80px); display: grid; grid-template-columns: 1.05fr .95fr; gap: 36px; align-items: center; padding: 28px 0 70px; }
+    h1 { margin: 0; font-size: clamp(42px, 7vw, 82px); line-height: 1.04; letter-spacing: 0; }
+    h2 { margin: 0; font-size: clamp(28px, 4vw, 48px); letter-spacing: 0; }
+    h3 { margin: 0; }
+    p { line-height: 1.75; }
+    .lav { background: linear-gradient(135deg, white, #c4b5fd 50%, #a78bfa); -webkit-background-clip: text; color: transparent; }
+    .gold { background: linear-gradient(135deg, #fff2c7, #f5d28a, #c99b42); -webkit-background-clip: text; color: transparent; }
+    .muted { color: var(--muted); }
+    .pill, .badge {
+      display: inline-flex; gap: 8px; align-items: center;
+      border: 1px solid rgba(245,210,138,.32);
+      background: rgba(245,210,138,.1);
+      color: #ffe6ae;
+      border-radius: 999px;
+      padding: 9px 13px;
+      font-size: 13px;
+    }
+    .pills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .card {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(255,255,255,.11), rgba(255,255,255,.04));
+      box-shadow: 0 24px 80px rgba(0,0,0,.3);
+      backdrop-filter: blur(18px);
+      border-radius: 8px;
+      padding: 24px;
+    }
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 8px;
+      min-height: 48px;
+      padding: 13px 18px;
+      color: #050816;
+      background: linear-gradient(135deg, #f5d28a, #ffe6ae, #c4b5fd);
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 0 36px rgba(245,210,138,.18);
+    }
+    .btn.secondary {
+      color: white;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      box-shadow: none;
+    }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .preview { padding: 0; overflow: hidden; }
+    .preview-head { padding: 24px; border-bottom: 1px solid var(--line); }
+    .bar { height: 10px; background: rgba(255,255,255,.1); border-radius: 999px; overflow: hidden; }
+    .bar span { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--gold), var(--purple)); }
+    .locked { margin-top: 14px; padding: 16px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; filter: blur(.2px); }
+    .section { padding: 70px 0; }
+    .grid { display: grid; gap: 16px; }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .screen { min-height: 100vh; display: none; align-items: center; padding: 40px 0; }
+    .screen.active { display: flex; }
+    .test { width: min(760px, 100%); margin: 0 auto; }
+    .progress { margin-bottom: 24px; }
+    .progress-line { height: 8px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; margin-top: 10px; }
+    .progress-line span { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), var(--purple)); transition: width .25s; }
+    input, select {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color: white;
+      border-radius: 8px;
+      padding: 14px;
+      outline: 0;
+    }
+    option { color: #111827; }
+    .choices { display: grid; gap: 12px; margin-top: 18px; }
+    .choice {
+      text-align: left;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 15px;
+      cursor: pointer;
+    }
+    .choice.selected { border-color: var(--gold); background: rgba(245,210,138,.14); color: white; }
+    .likert { grid-template-columns: repeat(5, 1fr); }
+    .orb {
+      width: 210px; height: 210px; border-radius: 50%; margin: 0 auto 24px;
+      background: radial-gradient(circle at 38% 30%, #f8e9b7, #8b5cf6 38%, #080a18 72%);
+      box-shadow: 0 0 70px rgba(139,92,246,.45);
+      animation: pulse 2.4s infinite ease-in-out;
+    }
+    @keyframes pulse { 50% { transform: scale(1.08); filter: brightness(1.2); } }
+    .report-cover { border-color: rgba(245,210,138,.35); background: radial-gradient(circle at 16% 0%, rgba(245,210,138,.16), transparent 30%), rgba(255,255,255,.07); }
+    .small { font-size: 13px; color: rgba(255,255,255,.55); }
+    .hidden { display: none !important; }
+    @media (max-width: 820px) {
+      .hero, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .likert { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="landing">
+    <div class="wrap">
+      <div class="nav"><div class="brand">AstroMind</div><button class="btn secondary" onclick="startTest()">立即测评</button></div>
+      <section class="hero">
+        <div>
+          <div class="pill">AI 分析你的隐藏人格与职业命运</div>
+          <h1 class="lav" style="margin-top:18px">解锁你的隐藏人格</h1>
+          <p class="muted" style="font-size:20px">结合 MBTI、星座与 AI 深度分析，找到你天生适合的工作、人际模式与人生方向。</p>
+          <div class="actions"><button class="btn" onclick="startTest()">立即测评</button><button class="btn secondary" onclick="document.getElementById('sample').scrollIntoView()">先查看免费结果</button></div>
+          <p class="small">已有 126,564 人完成测评</p>
+          <div class="pills"><span class="badge">性格分析</span><span class="badge">职业推荐</span><span class="badge">财富潜能</span><span class="badge">感情模式</span><span class="badge">成长建议</span></div>
+        </div>
+        <div class="card preview">
+          <div class="preview-head"><b style="color:var(--gold)">已完成分析 100%</b><div class="bar" style="margin-top:14px"><span></span></div></div>
+          <div style="padding:24px">
+            <p class="muted">你的隐藏人格</p><h2 class="gold">深层战略家</h2>
+            <p class="muted">你真正强大的地方，不是你说了多少，而是你总能比别人更早看见问题背后的结构。</p>
+            <div class="locked">最适合你的职业方向 · 已生成</div>
+            <div class="locked">财富潜能与赚钱方式 · 已生成</div>
+            <div class="locked">感情中的隐藏模式 · 已生成</div>
+          </div>
+        </div>
+      </section>
+      <section class="section" id="sample">
+        <h2>一次性解锁，无订阅，无隐藏费用</h2>
+        <div class="grid grid-3" style="margin-top:22px">
+          <div class="card"><h3>双重系统推算</h3><p class="muted">MBTI + 星座融合，同时看见思考方式与情绪动机。</p></div>
+          <div class="card"><h3>AI-style 深度分析</h3><p class="muted">生成更像个人专属的职业与人生报告。</p></div>
+          <div class="card"><h3>精美视觉报告</h3><p class="muted">适合收藏、截图分享，也适合和朋友比较结果。</p></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="app" class="screen">
+    <div class="wrap">
+      <div class="test">
+        <div class="progress"><div class="brand">AstroMind 测试版</div><div class="progress-line"><span id="progress"></span></div></div>
+        <div class="card" id="stepCard"></div>
+        <div class="actions"><button class="btn secondary" onclick="backStep()">上一步</button><button class="btn" id="nextBtn" onclick="nextStep()">下一步</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="analyzing" class="screen">
+    <div class="wrap">
+      <div class="test card" style="text-align:center">
+        <div class="orb"></div><p style="color:var(--gold);font-weight:800">AI-style analysis running</p>
+        <h2 class="lav">正在解析你的隐藏人格</h2>
+        <p class="muted">系统正在结合你的 MBTI 倾向、星座动机层、职业焦虑和人生阶段，生成报告。</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="result" class="hidden">
+    <div class="wrap section">
+      <div class="card report-cover">
+        <p style="color:var(--gold);font-weight:800">你的隐藏人格是</p>
+        <h1 class="lav" id="archetype">深层战略家</h1>
+        <p class="muted" id="summary"></p>
+        <div class="pills" id="keywords"></div>
+      </div>
+      <div class="grid grid-3" style="margin-top:18px">
+        <div class="card"><p style="color:var(--gold)">你的核心性格</p><h3 id="coreTitle"></h3><p class="muted" id="coreText"></p></div>
+        <div class="card"><p style="color:var(--gold)">你的工作节奏</p><h3>先理解，再出手</h3><p class="muted">你适合先有独处思考，再进行关键沟通，最后把方向整理成可执行任务。</p></div>
+        <div class="card"><p style="color:var(--gold)">你的隐藏优势</p><h3>判断力</h3><p class="muted">你不是单纯追随大众意见的人，很多选择会先经过自己的内在筛选。</p></div>
+      </div>
+      <div class="card" style="margin-top:18px;text-align:center">
+        <h2>完整报告已生成</h2><p class="muted">测试版已跳过 payment，可直接查看完整 Premium 报告。</p>
+        <button class="btn" onclick="showFull()">跳过付款，查看完整报告</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="full" class="hidden">
+    <div class="wrap section">
+      <div class="card report-cover">
+        <p style="color:var(--gold);font-weight:800">Premium Cosmic Report</p>
+        <h1 class="lav" id="fullTitle"></h1>
+        <p class="muted" id="fullMeta"></p>
+      </div>
+      <div class="grid grid-2" style="margin-top:18px">
+        <div class="card"><h2>核心人格分析</h2><p class="muted" id="fullPersonality"></p></div>
+        <div class="card"><h2>财富倾向</h2><p class="muted">你不适合只靠短期冲动赚钱。你更适合长期布局、专业能力变现、内容资产或副业产品化。</p></div>
+        <div class="card"><h2>推荐职业</h2><div id="careers" class="grid"></div></div>
+        <div class="card"><h2>感情与社交</h2><p class="muted">你需要的不是完美对象，而是能让你安全表达真实想法的人。越重要的关系，越需要练习把需求说得更直接。</p></div>
+        <div class="card"><h2>30 天成长计划</h2><p class="muted">Week 1 自我觉察 · Week 2 职业清晰 · Week 3 技能方向 · Week 4 行动计划。</p></div>
+        <div class="card"><h2>分享结果卡</h2><p class="muted" id="shareLine"></p><button class="btn secondary" onclick="window.print()">下载 / 打印 PDF</button></div>
+      </div>
+      <p class="small">This report is for self-reflection, entertainment, and personal growth reference only. It is not medical, psychological, or professional career advice.</p>
+    </div>
+  </div>
+
+  <script>
+    const state = { step: 0, nickname: "", age: "", status: "", concern: "", mbti: "", zodiac: "", answers: {} };
+    const questions = [
+      { type: "input", key: "nickname", title: "你希望报告怎样称呼你？", placeholder: "例如：Jia, 小林, Moon" },
+      { type: "choice", key: "age", title: "你的年龄范围是？", choices: ["18-21", "22-25", "26-30", "31-35", "36+"] },
+      { type: "choice", key: "status", title: "你现在处在人生哪个阶段？", choices: ["学生", "刚毕业", "上班族", "创业者 / 老板", "想转换跑道", "还不确定"] },
+      { type: "choice", key: "concern", title: "你现在最想解决的问题是？", choices: ["不知道什么工作适合我", "觉得现在卡住了", "想提高收入", "想开始创业", "想要更好的生活平衡", "想更了解自己"] },
+      { type: "input", key: "mbti", title: "如果你知道 MBTI，可以直接输入。", placeholder: "例如 INTJ，不知道可留空" },
+      { type: "choice", key: "zodiac", title: "选择你的星座。", choices: ["白羊座", "金牛座", "双子座", "巨蟹座", "狮子座", "处女座", "天秤座", "天蝎座", "射手座", "摩羯座", "水瓶座", "双鱼座"] },
+      { type: "likert", key: "q1", title: "我更喜欢一个人安静思考，而不是马上和别人讨论。" },
+      { type: "likert", key: "q2", title: "我常常会思考未来的可能性和隐藏意义。" },
+      { type: "likert", key: "q3", title: "我做决定时更重视逻辑，而不是别人的感受。" },
+      { type: "likert", key: "q4", title: "我喜欢提前计划，而不是临时发挥。" }
+    ];
+    const zodiacTraits = {
+      "天蝎座": ["深度", "策略", "忠诚"], "摩羯座": ["长期主义", "责任感", "成就"], "双子座": ["好奇", "表达", "学习快"],
+      "双鱼座": ["共情", "想象", "灵感"], "巨蟹座": ["保护欲", "感受力", "记忆深"], "水瓶座": ["独立", "创新", "系统"]
+    };
+    const archetypes = { "INTJ-天蝎座": "深层战略家", "ENFP-双子座": "灵感发动机", "INFJ-双鱼座": "灵魂观察者", "ENTJ-摩羯座": "长期掌控者", "ISFJ-巨蟹座": "温柔守护者" };
+    function startTest(){ document.getElementById("landing").classList.add("hidden"); document.getElementById("app").classList.add("active"); renderStep(); }
+    function renderStep(){
+      const q = questions[state.step]; document.getElementById("progress").style.width = ((state.step + 1) / questions.length * 100) + "%";
+      let html = `<h2>${q.title}</h2>`;
+      if(q.type === "input") html += `<div style="margin-top:18px"><input id="field" placeholder="${q.placeholder}" value="${state[q.key] || ""}" oninput="state['${q.key}']=this.value"></div>`;
+      if(q.type === "choice") html += `<div class="choices">${q.choices.map(c => `<button class="choice ${state[q.key]===c?'selected':''}" onclick="state['${q.key}']='${c}';renderStep()">${c}</button>`).join("")}</div>`;
+      if(q.type === "likert") html += `<div class="choices likert">${[1,2,3,4,5].map(n => `<button class="choice ${state.answers[q.key]===n?'selected':''}" onclick="state.answers['${q.key}']=${n};renderStep()"><b>${n}</b><br>${["非常不同意","不同意","普通","同意","非常同意"][n-1]}</button>`).join("")}</div>`;
+      document.getElementById("stepCard").innerHTML = html;
+      document.getElementById("nextBtn").textContent = state.step === questions.length - 1 ? "生成我的报告" : "下一步";
+    }
+    function backStep(){ if(state.step>0){ state.step--; renderStep(); } }
+    function nextStep(){ if(state.step < questions.length - 1){ state.step++; renderStep(); } else analyze(); }
+    function deriveMbti(){
+      if(state.mbti && state.mbti.trim().length >= 4) return state.mbti.trim().toUpperCase().slice(0,4);
+      const a = state.answers; return `${(a.q1||3)>=4?'I':'E'}${(a.q2||3)>=4?'N':'S'}${(a.q3||3)>=4?'T':'F'}${(a.q4||3)>=4?'J':'P'}`;
+    }
+    function analyze(){ document.getElementById("app").classList.remove("active"); document.getElementById("analyzing").classList.add("active"); setTimeout(showResult, 1800); }
+    function report(){
+      const mbti = deriveMbti(); const z = state.zodiac || "天蝎座"; const traits = zodiacTraits[z] || ["洞察", "成长", "判断"];
+      const title = archetypes[`${mbti}-${z}`] || traits[0] + "型" + (mbti.includes("N") ? "洞察者" : "执行者");
+      return { mbti, z, traits, title };
+    }
+    function showResult(){
+      const r = report();
+      document.getElementById("analyzing").classList.remove("active"); document.getElementById("result").classList.remove("hidden");
+      document.getElementById("archetype").textContent = r.title;
+      document.getElementById("summary").textContent = `${state.nickname || "你"}，你不是没有方向，你只是无法接受一个没有意义的未来。你适合的不是重复型工作，而是能让你掌控节奏和发挥判断力的环境。`;
+      document.getElementById("keywords").innerHTML = [r.mbti, r.z, ...r.traits].map(x => `<span class="badge">${x}</span>`).join("");
+      document.getElementById("coreTitle").textContent = r.traits[0];
+      document.getElementById("coreText").textContent = "你会先观察、理解、判断，再真正行动。你不喜欢被无意义的规则限制，也很难接受没有成长空间的工作。";
+      window.scrollTo(0,0);
+    }
+    function showFull(){
+      const r = report();
+      document.getElementById("result").classList.add("hidden"); document.getElementById("full").classList.remove("hidden");
+      document.getElementById("fullTitle").textContent = r.title;
+      document.getElementById("fullMeta").textContent = `${state.nickname || "匿名用户"} · ${r.mbti} + ${r.z} · Premium 测试报告`;
+      document.getElementById("fullPersonality").textContent = "你习惯先看结构，再判断行动。压力越大，你越想把混乱整理成系统，但也容易把所有事情都扛在自己脑中。别人可能误会你冷淡，其实你只是不会轻易把真实判断交给不够安全的环境。";
+      const careers = ["Product manager", "Brand strategist", "UX researcher", "Data analyst", "Entrepreneur", "Consultant", "Content strategist", "Business analyst"];
+      document.getElementById("careers").innerHTML = careers.map((c,i)=>`<div class="locked" style="filter:none"><b>${c}</b><br><span class="muted">匹配度 ${96-i*3}% · 适合把洞察转化成可执行结果。</span></div>`).join("");
+      document.getElementById("shareLine").textContent = `我的隐藏人格是：${r.title} · ${r.mbti} · ${r.z}`;
+      window.scrollTo(0,0);
+    }
+  </script>
+</body>
+</html>
