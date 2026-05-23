@@ -389,18 +389,11 @@
         <div class="card"><p style="color:var(--gold)">你的隐藏优势</p><h3 id="edgeTitle">判断力</h3><p class="muted" id="edgeText"></p></div>
       </div>
       <div class="card" style="margin-top:18px;text-align:center">
-        <h2>完整报告已生成</h2><p class="muted">付费后即可解锁 Premium 完整报告，包括职业匹配、感情社交、财富倾向与 30 天成长计划。</p>
-        <button class="btn" id="paymentBtn" onclick="startPayment()">付费解锁完整报告</button>
+        <h2>完整报告已生成</h2><p class="muted">现在可免费查看 Premium 完整报告，包括职业匹配、感情社交、财富倾向与 30 天成长计划。</p>
+        <button class="btn" id="paymentBtn" onclick="unlockFullReport()">免费查看完整报告</button>
         <div class="payment-note">
-          <b style="color:var(--gold)">Malaysia payment friendly</b>
-          <div class="payment-methods">
-            <span class="method">FPX</span>
-            <span class="method">DuitNow QR</span>
-            <span class="method">TNG eWallet</span>
-            <span class="method">GrabPay</span>
-            <span class="method">Bank Card</span>
-          </div>
-          <p class="small">可用付款方式以你的付款页面实际显示为准。付款成功后，系统会带你回到完整报告页面。</p>
+          <b style="color:var(--gold)">Limited free access</b>
+          <p class="small">目前测试版暂时免费开放完整报告，无需付款。系统仍会记录基础测评资料，方便你之后导出顾客资料表。</p>
         </div>
       </div>
     </div>
@@ -474,8 +467,7 @@
     const state = { step: 0, nickname: "", email: "", age: "", status: "", concern: "", mbti: "", zodiac: "", answers: {} };
     let currentLang = localStorage.getItem("astromind_lang") || "zh";
     const PAYMENT_CONFIG = {
-      priceLabel: "RM 2.99",
-      paymentLink: "PASTE_YOUR_PAYMENT_LINK_HERE",
+      priceLabel: "Free",
       successParam: "paid"
     };
     const COLLECTOR_CONFIG = {
@@ -517,17 +509,16 @@
         pace: "你的工作节奏",
         edge: "你的隐藏优势",
         payTitle: "完整报告已生成",
-        payText: "付费后即可解锁 Premium 完整报告，包括职业匹配、感情社交、财富倾向与 30 天成长计划。",
-        paymentFriendly: "Malaysia payment friendly",
-        paymentNote: "可用付款方式以你的付款页面实际显示为准。付款成功后，系统会带你回到完整报告页面。",
+        payText: "现在可免费查看 Premium 完整报告，包括职业匹配、感情社交、财富倾向与 30 天成长计划。",
+        paymentFriendly: "Limited free access",
+        paymentNote: "目前测试版暂时免费开放完整报告，无需付款。系统仍会记录基础测评资料，方便你之后导出顾客资料表。",
         fullHeadings: ["核心人格分析","财富倾向","推荐职业","感情与社交","30 天成长计划","分享结果卡"],
         printPdf: "下载 / 打印 PDF",
         footer: "Self-reflection and career exploration only. Not a hiring, medical, psychological, legal, or financial decision tool.",
         confidence: "信心",
         anonymous: "匿名用户",
         notProvided: "未填写",
-        paymentButton: "付费解锁完整报告",
-        alertPayment: "请先把代码里的 PAYMENT_CONFIG.paymentLink 换成你的真实付款链接。测试付款成功页面时，可以在网址后面加 ?paid=1。",
+        paymentButton: "免费查看完整报告",
         alertRestore: "付款成功，但没有找到刚才的测评资料。请重新完成测评。"
       },
       en: {
@@ -562,17 +553,16 @@
         pace: "Work Rhythm",
         edge: "Hidden Strength",
         payTitle: "Your Full Report Is Ready",
-        payText: "Unlock the Premium report for career matches, relationship and social patterns, money tendency, and a 30-day growth plan.",
-        paymentFriendly: "Malaysia payment friendly",
-        paymentNote: "Available payment methods depend on the checkout page. After payment, you will be redirected back to your full report.",
+        payText: "The Premium report is temporarily free in this beta. View your career matches, relationship and social patterns, money tendency, and 30-day growth plan.",
+        paymentFriendly: "Limited free access",
+        paymentNote: "No payment is required for the current beta version. Basic test data may still be saved so you can export customer records later.",
         fullHeadings: ["Core Personality","Money Tendency","Recommended Careers","Relationships & Social Style","30-Day Growth Plan","Share Card"],
         printPdf: "Download / Print PDF",
         footer: "Self-reflection and career exploration only. Not a hiring, medical, psychological, legal, or financial decision tool.",
         confidence: "Confidence",
         anonymous: "Anonymous User",
         notProvided: "Not provided",
-        paymentButton: "Unlock Full Report",
-        alertPayment: "Please replace PAYMENT_CONFIG.paymentLink in the code with your real payment link. To test the success page, add ?paid=1 to the URL.",
+        paymentButton: "View Full Report Free",
         alertRestore: "Payment succeeded, but the previous test data could not be found. Please complete the test again."
       }
     };
@@ -748,20 +738,20 @@
           <h3>Information we may process</h3>
           <ul>
             <li>Nickname, email, age range, life stage, current concern, MBTI, zodiac sign, quiz answers, and generated report content.</li>
-            <li>Payment status or payment reference from the checkout provider. AstroMind does not collect or store your card number or banking password.</li>
+            <li>If payment is enabled later, payment status or payment reference from the checkout provider. AstroMind does not collect or store your card number or banking password.</li>
             <li>Basic browser data needed for security, troubleshooting, and product analytics if analytics tools are added later.</li>
           </ul>
           <h3>How your data is used</h3>
           <ul>
             <li>To generate, unlock, restore, and deliver your AstroMind report.</li>
-            <li>To respond to support requests, payment issues, duplicate purchases, or refund questions.</li>
+            <li>To respond to support requests, access issues, payment issues if payment is enabled later, duplicate purchases, or refund questions.</li>
             <li>To improve wording, scoring, user flow, and report quality in an aggregated or non-identifying way.</li>
           </ul>
           <h3>Storage and third parties</h3>
           <ul>
-            <li>In this static GitHub Pages version, your unfinished report may be saved in your browser's local storage so it can be restored after payment.</li>
+            <li>In this static GitHub Pages version, your unfinished report may be saved in your browser's local storage so it can be restored if you leave and return.</li>
             <li>If a database, Google Sheet, email tool, payment provider, or analytics service is connected later, relevant data may be processed by those services to operate the product.</li>
-            <li>We do not sell personal information. We only share data when needed to provide the report, process payment, comply with law, or protect the service.</li>
+            <li>We do not sell personal information. We only share data when needed to provide the report, process payment if enabled later, comply with law, or protect the service.</li>
           </ul>
           <h3>Your choices</h3>
           <ul>
@@ -781,11 +771,11 @@
             <li>You agree not to misuse, copy, resell, scrape, or interfere with the website or report system.</li>
             <li>You should be at least 18 years old, or use the service with guidance from a parent or guardian.</li>
           </ul>
-          <h3>Payments and access</h3>
+          <h3>Access and payments</h3>
           <ul>
-            <li>The Premium report price is shown before checkout. Payment is handled by the external checkout provider selected by AstroMind.</li>
-            <li>Access is normally delivered immediately after successful payment and return to the report page.</li>
-            <li>Because this is a personalized digital report, purchases are generally non-refundable after the report is unlocked, except where required by law, duplicate payment, or technical failure.</li>
+            <li>The current beta may offer the Premium report for free. If payment is enabled later, the price will be shown before checkout.</li>
+            <li>When payment is enabled, payment will be handled by the external checkout provider selected by AstroMind.</li>
+            <li>Because this is a personalized digital report, future paid purchases may be non-refundable after the report is unlocked, except where required by law, duplicate payment, or technical failure.</li>
           </ul>
           <h3>No guaranteed outcomes</h3>
           <ul>
@@ -1081,13 +1071,9 @@
         renderAdminPanel();
       }
     }
-    function startPayment(){
+    function unlockFullReport(){
       savePendingReport();
-      if(!PAYMENT_CONFIG.paymentLink || PAYMENT_CONFIG.paymentLink.includes("PASTE_YOUR_PAYMENT_LINK_HERE")) {
-        alert(t("alertPayment"));
-        return;
-      }
-      window.location.href = PAYMENT_CONFIG.paymentLink;
+      showFull();
     }
     function checkPaidReturn(){
       const params = new URLSearchParams(window.location.search);
@@ -1105,7 +1091,7 @@
     }
     function initializePaymentButton(){
       const paymentBtn = document.getElementById("paymentBtn");
-      if(paymentBtn) paymentBtn.textContent = `${t("paymentButton")} · ${PAYMENT_CONFIG.priceLabel}`;
+      if(paymentBtn) paymentBtn.textContent = PAYMENT_CONFIG.priceLabel.toLowerCase() === "free" ? t("paymentButton") : `${t("paymentButton")} · ${PAYMENT_CONFIG.priceLabel}`;
     }
     function getAnswerScores(){
       const scores = { E:0, I:0, S:0, N:0, T:0, F:0, J:0, P:0 };
