@@ -169,6 +169,102 @@
       background: rgba(245,210,138,.07);
     }
     .signal b { color: #ffe6ae; }
+    .payment-note {
+      margin-top: 18px;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,.11);
+      border-radius: 8px;
+      background: rgba(255,255,255,.055);
+      text-align: left;
+    }
+    .payment-methods {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .method {
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 999px;
+      padding: 7px 10px;
+      color: #ffe6ae;
+      background: rgba(245,210,138,.08);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .legal-footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid rgba(255,255,255,.12);
+      padding: 28px 0 34px;
+      background: rgba(5,8,22,.48);
+    }
+    .legal-inner {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px 22px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .legal-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .legal-links button {
+      border: 0;
+      padding: 0;
+      color: #ffe6ae;
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+    .legal-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(0,0,0,.68);
+    }
+    .legal-panel {
+      position: relative;
+      width: min(780px, 100%);
+      max-height: min(86vh, 760px);
+      overflow: auto;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 8px;
+      padding: 28px;
+      background: #090d22;
+      box-shadow: 0 28px 90px rgba(0,0,0,.45);
+    }
+    .legal-panel h2 { font-size: clamp(26px, 4vw, 40px); }
+    .legal-panel h3 { margin-top: 22px; color: #ffe6ae; }
+    .legal-panel ul { padding-left: 20px; color: var(--muted); line-height: 1.75; }
+    .legal-panel blockquote {
+      margin: 18px 0;
+      padding: 14px 18px;
+      border-left: 4px solid var(--gold);
+      background: rgba(245,210,138,.08);
+      color: white;
+      line-height: 1.7;
+    }
+    .legal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 8px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      cursor: pointer;
+      font-size: 24px;
+      line-height: 1;
+    }
     @media (max-width: 820px) {
       .hero, .grid-2, .grid-3, .signal-grid { grid-template-columns: 1fr; }
       .likert { grid-template-columns: 1fr; }
@@ -246,8 +342,19 @@
         <div class="card"><p style="color:var(--gold)">你的隐藏优势</p><h3 id="edgeTitle">判断力</h3><p class="muted" id="edgeText"></p></div>
       </div>
       <div class="card" style="margin-top:18px;text-align:center">
-        <h2>完整报告已生成</h2><p class="muted">测试版已跳过 payment，可直接查看完整 Premium 报告。</p>
-        <button class="btn" onclick="showFull()">跳过付款，查看完整报告</button>
+        <h2>完整报告已生成</h2><p class="muted">付费后即可解锁 Premium 完整报告，包括职业匹配、感情社交、财富倾向与 30 天成长计划。</p>
+        <button class="btn" id="paymentBtn" onclick="startPayment()">付费解锁完整报告</button>
+        <div class="payment-note">
+          <b style="color:var(--gold)">Malaysia payment friendly</b>
+          <div class="payment-methods">
+            <span class="method">FPX</span>
+            <span class="method">DuitNow QR</span>
+            <span class="method">TNG eWallet</span>
+            <span class="method">GrabPay</span>
+            <span class="method">Bank Card</span>
+          </div>
+          <p class="small">可用付款方式以你的付款页面实际显示为准。付款成功后，系统会带你回到完整报告页面。</p>
+        </div>
       </div>
     </div>
   </div>
@@ -267,12 +374,40 @@
         <div class="card"><h2>30 天成长计划</h2><p class="muted" id="growthPlan">Week 1 自我觉察 · Week 2 职业清晰 · Week 3 技能方向 · Week 4 行动计划。</p></div>
         <div class="card"><h2>分享结果卡</h2><p class="muted" id="shareLine"></p><button class="btn secondary" onclick="window.print()">下载 / 打印 PDF</button></div>
       </div>
-      <p class="small">This report is for self-reflection, entertainment, and personal growth reference only. It is not medical, psychological, or professional career advice.</p>
+      <p class="small">This report is for self-reflection and career exploration only. It should not be used as the sole basis for hiring, medical, psychological, legal, or financial decisions.</p>
+    </div>
+  </div>
+
+  <footer class="legal-footer">
+    <div class="wrap legal-inner">
+      <div>
+        <div class="brand">AstroMind</div>
+        <p class="small">Self-reflection and career exploration only. Not a hiring, medical, psychological, legal, or financial decision tool.</p>
+      </div>
+      <div class="legal-links">
+        <button type="button" onclick="openLegal('privacy')">Privacy Policy</button>
+        <button type="button" onclick="openLegal('terms')">Terms of Use</button>
+        <button type="button" onclick="openLegal('disclaimer')">Disclaimer</button>
+      </div>
+    </div>
+  </footer>
+
+  <div id="legalModal" class="legal-modal hidden" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
+    <div class="legal-panel">
+      <button class="legal-close" type="button" onclick="closeLegal()" aria-label="Close">×</button>
+      <h2 class="lav" id="legalTitle"></h2>
+      <div id="legalBody"></div>
     </div>
   </div>
 
   <script>
     const state = { step: 0, nickname: "", email: "", age: "", status: "", concern: "", mbti: "", zodiac: "", answers: {} };
+    const PAYMENT_CONFIG = {
+      priceLabel: "RM 2.99",
+      paymentLink: "PASTE_YOUR_PAYMENT_LINK_HERE",
+      successParam: "paid"
+    };
+    const PENDING_REPORT_KEY = "astromind_pending_report";
     const questions = [
       { type: "input", key: "nickname", title: "你希望报告怎样称呼你？", placeholder: "例如：Jia, 小林, Moon" },
       { type: "input", key: "email", title: "留下 Gmail / Email，方便之后保存或发送报告。", placeholder: "例如：yourname@gmail.com，可先留空" },
@@ -350,7 +485,91 @@
       { name: "创业服务 / 个人品牌商业化", dimensions: ["E","N","T","P"], traits: ["开创","自由","表达","策略"], concerns: ["想开始创业","想提高收入"], statuses: ["创业者 / 老板","上班族","想转换跑道"], summary: "把个人能力包装成服务、内容、产品和长期信用。", output: "先选择一个细分人群，做 1 个低价服务包验证需求。", drain: "如果没有节奏管理，很容易同时想做太多方向。" },
       { name: "教育咨询 / 成长陪跑", dimensions: ["I","N","F","J"], traits: ["共情","责任感","耐力","保护欲"], concerns: ["想更了解自己","想要更好的生活平衡","不知道什么工作适合我"], statuses: ["上班族","想转换跑道","创业者 / 老板"], summary: "把理解、结构和陪伴感结合，帮助别人做长期改变。", output: "先做 3 次免费或低价体验，记录对方最需要被支持的环节。", drain: "如果边界不清，你会把客户的人生压力带回自己生活里。" }
     ];
+    const legalContent = {
+      privacy: {
+        title: "Privacy Policy",
+        body: `
+          <p class="muted">AstroMind asks for information only to generate your personal report and improve the product experience.</p>
+          <h3>Information we may process</h3>
+          <ul>
+            <li>Nickname, email, age range, life stage, current concern, MBTI, zodiac sign, quiz answers, and generated report content.</li>
+            <li>Payment status or payment reference from the checkout provider. AstroMind does not collect or store your card number or banking password.</li>
+            <li>Basic browser data needed for security, troubleshooting, and product analytics if analytics tools are added later.</li>
+          </ul>
+          <h3>How your data is used</h3>
+          <ul>
+            <li>To generate, unlock, restore, and deliver your AstroMind report.</li>
+            <li>To respond to support requests, payment issues, duplicate purchases, or refund questions.</li>
+            <li>To improve wording, scoring, user flow, and report quality in an aggregated or non-identifying way.</li>
+          </ul>
+          <h3>Storage and third parties</h3>
+          <ul>
+            <li>In this static GitHub Pages version, your unfinished report may be saved in your browser's local storage so it can be restored after payment.</li>
+            <li>If a database, Google Sheet, email tool, payment provider, or analytics service is connected later, relevant data may be processed by those services to operate the product.</li>
+            <li>We do not sell personal information. We only share data when needed to provide the report, process payment, comply with law, or protect the service.</li>
+          </ul>
+          <h3>Your choices</h3>
+          <ul>
+            <li>You may leave optional fields blank when the test allows it.</li>
+            <li>You may request correction or deletion of stored report data after a storage system and contact channel are connected.</li>
+            <li>Before public launch, add your official contact email here so users know how to reach you.</li>
+          </ul>
+        `
+      },
+      terms: {
+        title: "Terms of Use",
+        body: `
+          <p class="muted">By using AstroMind, you agree to use it as a self-reflection and career exploration tool only.</p>
+          <h3>Use of the service</h3>
+          <ul>
+            <li>You are responsible for the accuracy of the information you enter.</li>
+            <li>You agree not to misuse, copy, resell, scrape, or interfere with the website or report system.</li>
+            <li>You should be at least 18 years old, or use the service with guidance from a parent or guardian.</li>
+          </ul>
+          <h3>Payments and access</h3>
+          <ul>
+            <li>The Premium report price is shown before checkout. Payment is handled by the external checkout provider selected by AstroMind.</li>
+            <li>Access is normally delivered immediately after successful payment and return to the report page.</li>
+            <li>Because this is a personalized digital report, purchases are generally non-refundable after the report is unlocked, except where required by law, duplicate payment, or technical failure.</li>
+          </ul>
+          <h3>No guaranteed outcomes</h3>
+          <ul>
+            <li>AstroMind does not guarantee job offers, income growth, relationship outcomes, personality accuracy, business success, or life decisions.</li>
+            <li>Reports are generated from your answers and rule-based interpretations, so results may vary depending on your input and mood.</li>
+          </ul>
+        `
+      },
+      disclaimer: {
+        title: "Disclaimer",
+        body: `
+          <blockquote>This tool is for self-reflection and career exploration only. It should not be used as the sole basis for hiring, medical, psychological, legal, or financial decisions.</blockquote>
+          <h3>中文说明</h3>
+          <p class="muted">AstroMind 的结果只适合用于自我了解、职业探索、沟通风格参考和个人成长启发。它不是心理诊断、医疗建议、法律建议、财务建议，也不是正式的人才测评或招聘筛选工具。</p>
+          <h3>For HR, teams, and employers</h3>
+          <ul>
+            <li>Do not use AstroMind to say whether a person is suitable or not suitable for a job.</li>
+            <li>Do not use it as a pass/fail filter, hiring score, promotion basis, salary basis, or performance judgment.</li>
+            <li>You may use it only as a soft conversation aid to understand communication style, motivation, work preference, and role inclination.</li>
+          </ul>
+          <h3>For users</h3>
+          <ul>
+            <li>Do not make major life, health, legal, financial, relationship, or career decisions based only on this report.</li>
+            <li>If you need professional help, speak with a qualified doctor, psychologist, lawyer, financial advisor, career counselor, or HR professional.</li>
+            <li>The report may feel personal, but it is still a reflection tool, not an objective diagnosis or guaranteed prediction.</li>
+          </ul>
+        `
+      }
+    };
     function startTest(){ document.getElementById("landing").classList.add("hidden"); document.getElementById("app").classList.add("active"); renderStep(); }
+    function openLegal(type){
+      const content = legalContent[type] || legalContent.disclaimer;
+      document.getElementById("legalTitle").textContent = content.title;
+      document.getElementById("legalBody").innerHTML = content.body;
+      document.getElementById("legalModal").classList.remove("hidden");
+    }
+    function closeLegal(){
+      document.getElementById("legalModal").classList.add("hidden");
+    }
     function esc(value){
       return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
     }
@@ -365,6 +584,48 @@
     }
     function backStep(){ if(state.step>0){ state.step--; renderStep(); } }
     function nextStep(){ if(state.step < questions.length - 1){ state.step++; renderStep(); } else analyze(); }
+    function savePendingReport(){
+      localStorage.setItem(PENDING_REPORT_KEY, JSON.stringify({ state, savedAt: Date.now() }));
+    }
+    function restorePendingReport(){
+      const raw = localStorage.getItem(PENDING_REPORT_KEY);
+      if(!raw) return false;
+      try {
+        const saved = JSON.parse(raw);
+        if(!saved.state) return false;
+        Object.assign(state, saved.state);
+        state.answers = saved.state.answers || {};
+        return true;
+      } catch(error) {
+        return false;
+      }
+    }
+    function startPayment(){
+      savePendingReport();
+      if(!PAYMENT_CONFIG.paymentLink || PAYMENT_CONFIG.paymentLink.includes("PASTE_YOUR_PAYMENT_LINK_HERE")) {
+        alert("请先把代码里的 PAYMENT_CONFIG.paymentLink 换成你的真实付款链接。测试付款成功页面时，可以在网址后面加 ?paid=1。");
+        return;
+      }
+      window.location.href = PAYMENT_CONFIG.paymentLink;
+    }
+    function checkPaidReturn(){
+      const params = new URLSearchParams(window.location.search);
+      const isPaid = ["1", "true", "yes", "success"].includes((params.get(PAYMENT_CONFIG.successParam) || "").toLowerCase());
+      if(!isPaid) return;
+      if(!restorePendingReport()) {
+        alert("付款成功，但没有找到刚才的测评资料。请重新完成测评。");
+        return;
+      }
+      document.getElementById("landing").classList.add("hidden");
+      document.getElementById("app").classList.remove("active");
+      document.getElementById("analyzing").classList.remove("active");
+      document.getElementById("result").classList.add("hidden");
+      showFull();
+    }
+    function initializePaymentButton(){
+      const paymentBtn = document.getElementById("paymentBtn");
+      if(paymentBtn) paymentBtn.textContent = `付费解锁完整报告 · ${PAYMENT_CONFIG.priceLabel}`;
+    }
     function getAnswerScores(){
       const scores = { E:0, I:0, S:0, N:0, T:0, F:0, J:0, P:0 };
       questions.filter(q => q.type === "likert").forEach(q => {
@@ -567,6 +828,16 @@
       document.getElementById("shareLine").textContent = `我的隐藏人格是：${r.title} · ${r.mbti} · ${r.z} · 最匹配职业：${careers[0].name}`;
       window.scrollTo(0,0);
     }
+    window.addEventListener("DOMContentLoaded", () => {
+      initializePaymentButton();
+      checkPaidReturn();
+      document.getElementById("legalModal").addEventListener("click", event => {
+        if(event.target.id === "legalModal") closeLegal();
+      });
+    });
+    document.addEventListener("keydown", event => {
+      if(event.key === "Escape") closeLegal();
+    });
   </script>
 </body>
 </html>
