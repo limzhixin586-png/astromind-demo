@@ -39,6 +39,16 @@
     }
     .wrap { width: min(1120px, calc(100% - 32px)); margin: 0 auto; position: relative; z-index: 1; }
     .nav { display: flex; justify-content: space-between; align-items: center; padding: 22px 0; }
+    .nav-actions { display: flex; gap: 10px; align-items: center; }
+    .lang-toggle {
+      border: 1px solid rgba(245,210,138,.32);
+      border-radius: 999px;
+      padding: 9px 13px;
+      color: #ffe6ae;
+      background: rgba(245,210,138,.08);
+      font-weight: 800;
+      cursor: pointer;
+    }
     .brand { color: var(--gold); font-weight: 800; letter-spacing: .2px; }
     .hero { min-height: calc(100vh - 80px); display: grid; grid-template-columns: 1.05fr .95fr; gap: 36px; align-items: center; padding: 28px 0 70px; }
     h1 { margin: 0; font-size: clamp(42px, 7vw, 82px); line-height: 1.04; letter-spacing: 0; }
@@ -265,6 +275,43 @@
       font-size: 24px;
       line-height: 1;
     }
+    .admin-panel {
+      position: relative;
+      z-index: 1;
+      padding: 28px 0;
+      border-top: 1px solid rgba(245,210,138,.18);
+      background: rgba(245,210,138,.055);
+    }
+    .admin-box {
+      display: grid;
+      gap: 14px;
+      border: 1px solid rgba(245,210,138,.2);
+      border-radius: 8px;
+      padding: 20px;
+      background: rgba(255,255,255,.055);
+    }
+    .admin-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .admin-table th,
+    .admin-table td {
+      border-bottom: 1px solid rgba(255,255,255,.1);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .admin-table th {
+      color: #ffe6ae;
+      font-weight: 800;
+    }
     @media (max-width: 820px) {
       .hero, .grid-2, .grid-3, .signal-grid { grid-template-columns: 1fr; }
       .likert { grid-template-columns: 1fr; }
@@ -276,7 +323,7 @@
 <body>
   <div id="landing">
     <div class="wrap">
-      <div class="nav"><div class="brand">AstroMind</div><button class="btn secondary" onclick="startTest()">立即测评</button></div>
+      <div class="nav"><div class="brand">AstroMind</div><div class="nav-actions"><button class="lang-toggle" id="langToggle" type="button" onclick="toggleLanguage()">English</button><button class="btn secondary" data-i18n="navStart" onclick="startTest()">立即测评</button></div></div>
       <section class="hero">
         <div>
           <div class="pill">AI 分析你的隐藏人格与职业命运</div>
@@ -392,6 +439,29 @@
     </div>
   </footer>
 
+  <section id="adminPanel" class="admin-panel hidden">
+    <div class="wrap">
+      <div class="admin-box">
+        <div>
+          <h2>Customer Records</h2>
+          <p class="muted" id="adminSummary">No records yet.</p>
+          <p class="small">This local export is for testing. For live customers on different phones, connect the collector endpoint to Google Sheets.</p>
+        </div>
+        <div class="admin-actions">
+          <button class="btn" type="button" onclick="downloadCustomerCSV()">Download Excel CSV</button>
+          <button class="btn secondary" type="button" onclick="downloadCustomerJSON()">Download Backup JSON</button>
+          <button class="btn secondary" type="button" onclick="clearCustomerRecords()">Clear Local Records</button>
+        </div>
+        <div style="overflow:auto">
+          <table class="admin-table">
+            <thead><tr><th>Time</th><th>Name</th><th>Email</th><th>Result</th><th>Top Career</th><th>Status</th></tr></thead>
+            <tbody id="adminRecords"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div id="legalModal" class="legal-modal hidden" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
     <div class="legal-panel">
       <button class="legal-close" type="button" onclick="closeLegal()" aria-label="Close">×</button>
@@ -402,12 +472,147 @@
 
   <script>
     const state = { step: 0, nickname: "", email: "", age: "", status: "", concern: "", mbti: "", zodiac: "", answers: {} };
+    let currentLang = localStorage.getItem("astromind_lang") || "zh";
     const PAYMENT_CONFIG = {
       priceLabel: "RM 2.99",
       paymentLink: "PASTE_YOUR_PAYMENT_LINK_HERE",
       successParam: "paid"
     };
+    const COLLECTOR_CONFIG = {
+      endpoint: "",
+      enabled: false
+    };
     const PENDING_REPORT_KEY = "astromind_pending_report";
+    const CUSTOMER_RECORDS_KEY = "astromind_customer_records";
+    const ui = {
+      zh: {
+        langButton: "English",
+        navStart: "立即测评",
+        heroPill: "AI 分析你的隐藏人格与职业命运",
+        heroTitle: "解锁你的隐藏人格",
+        heroText: "结合 MBTI、星座与 AI 深度分析，找到你天生适合的工作、人际模式与人生方向。",
+        start: "立即测评",
+        sample: "先查看免费结果",
+        completed: "已有 126,564 人完成测评",
+        badges: ["性格分析","职业推荐","财富潜能","感情模式","成长建议"],
+        previewDone: "已完成分析 100%",
+        previewLabel: "你的隐藏人格",
+        previewTitle: "深层战略家",
+        previewText: "你真正强大的地方，不是你说了多少，而是你总能比别人更早看见问题背后的结构。",
+        locked: ["最适合你的职业方向 · 已生成","财富潜能与赚钱方式 · 已生成","感情中的隐藏模式 · 已生成"],
+        sampleTitle: "一次性解锁，无订阅，无隐藏费用",
+        sampleCards: [
+          ["双重系统推算","MBTI + 星座融合，同时看见思考方式与情绪动机。"],
+          ["AI-style 深度分析","生成更像个人专属的职业与人生报告。"],
+          ["精美视觉报告","适合收藏、截图分享，也适合和朋友比较结果。"]
+        ],
+        testBrand: "AstroMind 测试版",
+        back: "上一步",
+        next: "下一步",
+        generate: "生成我的报告",
+        analyzingTitle: "正在解析你的隐藏人格",
+        analyzingText: "系统正在结合你的 MBTI 倾向、星座动机层、职业焦虑和人生阶段，生成报告。",
+        resultLabel: "你的隐藏人格是",
+        core: "你的核心性格",
+        pace: "你的工作节奏",
+        edge: "你的隐藏优势",
+        payTitle: "完整报告已生成",
+        payText: "付费后即可解锁 Premium 完整报告，包括职业匹配、感情社交、财富倾向与 30 天成长计划。",
+        paymentFriendly: "Malaysia payment friendly",
+        paymentNote: "可用付款方式以你的付款页面实际显示为准。付款成功后，系统会带你回到完整报告页面。",
+        fullHeadings: ["核心人格分析","财富倾向","推荐职业","感情与社交","30 天成长计划","分享结果卡"],
+        printPdf: "下载 / 打印 PDF",
+        footer: "Self-reflection and career exploration only. Not a hiring, medical, psychological, legal, or financial decision tool.",
+        confidence: "信心",
+        anonymous: "匿名用户",
+        notProvided: "未填写",
+        paymentButton: "付费解锁完整报告",
+        alertPayment: "请先把代码里的 PAYMENT_CONFIG.paymentLink 换成你的真实付款链接。测试付款成功页面时，可以在网址后面加 ?paid=1。",
+        alertRestore: "付款成功，但没有找到刚才的测评资料。请重新完成测评。"
+      },
+      en: {
+        langButton: "中文",
+        navStart: "Start Test",
+        heroPill: "AI-style personality and career report",
+        heroTitle: "Unlock Your Hidden Personality",
+        heroText: "Combine MBTI, zodiac signals, and structured reflection to discover your natural work style, relationship pattern, and next direction.",
+        start: "Start Test",
+        sample: "View Free Preview",
+        completed: "126,564 people have completed the test",
+        badges: ["Personality","Career","Money Potential","Relationships","Growth Plan"],
+        previewDone: "Analysis complete 100%",
+        previewLabel: "Your hidden personality",
+        previewTitle: "Deep Strategist",
+        previewText: "Your real strength is not how much you say, but how early you can see the structure behind a problem.",
+        locked: ["Best career directions · Generated","Money potential and income style · Generated","Hidden relationship pattern · Generated"],
+        sampleTitle: "One-time unlock, no subscription, no hidden fees",
+        sampleCards: [
+          ["Dual-system reading","MBTI + zodiac together reveal both thinking style and emotional motivation."],
+          ["AI-style deep analysis","A more personal career and life report based on your answers."],
+          ["Beautiful visual report","Easy to save, screenshot, share, and compare with friends."]
+        ],
+        testBrand: "AstroMind Beta",
+        back: "Back",
+        next: "Next",
+        generate: "Generate My Report",
+        analyzingTitle: "Analyzing Your Hidden Personality",
+        analyzingText: "The system is combining your MBTI pattern, zodiac motivation, career concern, and life stage to generate your report.",
+        resultLabel: "Your hidden personality is",
+        core: "Core Personality",
+        pace: "Work Rhythm",
+        edge: "Hidden Strength",
+        payTitle: "Your Full Report Is Ready",
+        payText: "Unlock the Premium report for career matches, relationship and social patterns, money tendency, and a 30-day growth plan.",
+        paymentFriendly: "Malaysia payment friendly",
+        paymentNote: "Available payment methods depend on the checkout page. After payment, you will be redirected back to your full report.",
+        fullHeadings: ["Core Personality","Money Tendency","Recommended Careers","Relationships & Social Style","30-Day Growth Plan","Share Card"],
+        printPdf: "Download / Print PDF",
+        footer: "Self-reflection and career exploration only. Not a hiring, medical, psychological, legal, or financial decision tool.",
+        confidence: "Confidence",
+        anonymous: "Anonymous User",
+        notProvided: "Not provided",
+        paymentButton: "Unlock Full Report",
+        alertPayment: "Please replace PAYMENT_CONFIG.paymentLink in the code with your real payment link. To test the success page, add ?paid=1 to the URL.",
+        alertRestore: "Payment succeeded, but the previous test data could not be found. Please complete the test again."
+      }
+    };
+    const labelEn = {
+      "18-21": "18-21", "22-25": "22-25", "26-30": "26-30", "31-35": "31-35", "36+": "36+",
+      "学生": "Student", "刚毕业": "Fresh graduate", "上班族": "Working professional", "创业者 / 老板": "Founder / Business owner", "想转换跑道": "Career changer", "还不确定": "Not sure yet",
+      "不知道什么工作适合我": "I do not know what job suits me", "觉得现在卡住了": "I feel stuck", "想提高收入": "I want to increase income", "想开始创业": "I want to start a business", "想要更好的生活平衡": "I want better life balance", "想更了解自己": "I want to understand myself",
+      "白羊座": "Aries", "金牛座": "Taurus", "双子座": "Gemini", "巨蟹座": "Cancer", "狮子座": "Leo", "处女座": "Virgo", "天秤座": "Libra", "天蝎座": "Scorpio", "射手座": "Sagittarius", "摩羯座": "Capricorn", "水瓶座": "Aquarius", "双鱼座": "Pisces",
+      "行动力": "action-oriented", "直接": "direct", "开创": "pioneering", "稳定": "stability", "审美": "aesthetic sense", "耐力": "stamina", "好奇": "curiosity", "表达": "expression", "学习快": "fast learning", "保护欲": "protective instinct", "感受力": "sensitivity", "记忆深": "deep memory", "表现力": "expressiveness", "领导感": "leadership", "热情": "warmth", "细节": "detail focus", "优化": "optimization", "专业": "professional depth", "协调": "coordination", "关系感": "relationship sense", "深度": "depth", "策略": "strategy", "忠诚": "loyalty", "自由": "freedom", "探索": "exploration", "乐观": "optimism", "长期主义": "long-term thinking", "责任感": "responsibility", "成就": "achievement", "独立": "independence", "创新": "innovation", "系统": "systems thinking", "共情": "empathy", "想象": "imagination", "灵感": "inspiration",
+      "产品策略 / 用户增长": "Product Strategy / User Growth", "数据分析 / 商业分析": "Data / Business Analysis", "UX 研究 / 用户洞察": "UX Research / User Insight", "品牌内容策略 / 小红书内容策划": "Brand Content Strategy / Social Content", "客户成功 / 社群运营": "Customer Success / Community Operations", "项目运营 / 流程管理": "Project Operations / Process Management", "销售顾问 / BD 合作": "Sales Consulting / BD Partnerships", "知识产品 / 线上课程": "Knowledge Products / Online Courses", "视觉设计 / 品牌体验": "Visual Design / Brand Experience", "自动化工具 / AI 工作流顾问": "Automation / AI Workflow Consultant", "HR 发展 / 人才培训": "HR Development / Training", "创业服务 / 个人品牌商业化": "Founder Services / Personal Brand Monetization", "教育咨询 / 成长陪跑": "Education Consulting / Growth Coaching"
+    };
+    const questionEn = {
+      nickname: { title: "What should we call you in the report?", placeholder: "Example: Jia, Lin, Moon" },
+      email: { title: "Leave your Gmail / Email so the report can be saved or sent later.", placeholder: "Example: yourname@gmail.com, optional for now" },
+      age: { title: "What is your age range?" },
+      status: { title: "Which life stage are you in right now?" },
+      concern: { title: "What do you most want to solve right now?" },
+      mbti: { title: "If you already know your MBTI, enter it here.", placeholder: "Example: INTJ; leave blank if unsure" },
+      zodiac: { title: "Choose your zodiac sign." },
+      ei1: { title: "I usually feel more energized after social interaction." },
+      ei2: { title: "I prefer thinking quietly alone instead of discussing immediately." },
+      ei3: { title: "In unfamiliar settings, I usually start conversations first." },
+      ei4: { title: "After meeting many people, I need alone time to recharge." },
+      ei5: { title: "I often organize my thoughts while speaking." },
+      sn1: { title: "I trust practical experience more than abstract ideas." },
+      sn2: { title: "I often think about future possibilities and hidden meanings." },
+      sn3: { title: "Before deciding, I first check whether the real-world conditions work." },
+      sn4: { title: "Repetitive work quickly drains my motivation." },
+      sn5: { title: "I enjoy connecting ideas across different fields." },
+      tf1: { title: "When deciding, I value logic more than people's feelings." },
+      tf2: { title: "I easily notice changes in other people's emotions." },
+      tf3: { title: "Even if something is true, I hesitate if the delivery hurts people." },
+      tf4: { title: "When facing a problem, I look for the root cause before soothing emotions." },
+      tf5: { title: "I care whether a choice aligns with my values." },
+      jp1: { title: "I like planning ahead instead of improvising." },
+      jp2: { title: "I dislike being restricted by too many rules." },
+      jp3: { title: "I feel uneasy when things are not clearly arranged." },
+      jp4: { title: "If a new possibility appears, I am willing to change the original plan." },
+      jp5: { title: "When completing tasks, I like setting deadlines and priorities." }
+    };
     const questions = [
       { type: "input", key: "nickname", title: "你希望报告怎样称呼你？", placeholder: "例如：Jia, 小林, Moon" },
       { type: "input", key: "email", title: "留下 Gmail / Email，方便之后保存或发送报告。", placeholder: "例如：yourname@gmail.com，可先留空" },
@@ -470,6 +675,56 @@
       "双鱼座": { traits: ["共情", "想象", "灵感"], emotion: "你容易吸收环境情绪，需要清楚边界保护自己。", money: "可能凭感觉消费，适合自动储蓄机制。", growth: "把梦想具体化，把边界说清楚。" }
     };
     const archetypes = { "INTJ-天蝎座": "深层战略家", "ENFP-双子座": "灵感发动机", "INFJ-双鱼座": "灵魂观察者", "ENTJ-摩羯座": "长期掌控者", "ISFJ-巨蟹座": "温柔守护者", "ENTP-水瓶座": "未来破局者", "ESTJ-摩羯座": "现实掌控者", "INFP-天秤座": "温柔造梦者", "ESFP-狮子座": "人群发光体" };
+    const archetypeEn = {
+      "深层战略家": "Deep Strategist", "灵感发动机": "Inspiration Engine", "灵魂观察者": "Soul Observer", "长期掌控者": "Long-Range Commander", "温柔守护者": "Gentle Guardian", "未来破局者": "Future Breaker", "现实掌控者": "Practical Commander", "温柔造梦者": "Gentle Dream Builder", "人群发光体": "Social Spark"
+    };
+    const mbtiProfilesEn = {
+      INTJ: { role: "Systems Strategist", opener: "Your strength is seeing the structure behind a problem before others notice it.", core: "You prefer to observe, model the situation, then commit with intention. You enjoy hard problems, but meaningless busyness drains you.", risk: "Low autonomy, constant fire-fighting, and work without a long-term goal will wear you down.", love: "You build trust slowly. Once committed, you want stability, depth, and clear boundaries." },
+      INTP: { role: "Logical Explorer", opener: "You do not lack motivation; you need to understand why something is worth doing.", core: "You naturally break rules into principles and models. The reasoning behind an answer matters as much as the answer itself.", risk: "Too many meetings, too little thinking space, and no room to question assumptions will drain you.", love: "You need mental connection and freedom, not emotional pressure or control." },
+      ENTJ: { role: "Goal Commander", opener: "You are not trying to control people; you simply notice when things could be better and no one is moving.", core: "You see goals, resources, and leverage points, then push scattered energy toward results.", risk: "Slow pace, unclear ownership, and endless emotion without action can frustrate you.", love: "You admire capable people with direction; in relationships, warmth matters as much as solutions." },
+      ENTP: { role: "Creative Breaker", opener: "You feel most alive when old rules can be redesigned.", core: "You find new angles, test quickly, and use language or ideas to open possibilities.", risk: "Repetition, rigid hierarchy, and no room for experimentation kill your energy.", love: "You need a relationship that is smart, playful, and spacious." },
+      INFJ: { role: "Soul Observer", opener: "You often sense what people have not said, which makes a clear future even more important for you.", core: "You connect emotions, motives, and future patterns earlier than most people.", risk: "Value conflict, shallow socializing, and work without meaning slowly drain you.", love: "You need deep understanding and emotional safety, not vague situationships." },
+      INFP: { role: "Value Creator", opener: "You are not too idealistic; you simply cannot live long inside an empty script.", core: "You judge whether something is worth doing through values, authenticity, and inner resonance.", risk: "A purely KPI-driven environment that suppresses personal expression can make you lose yourself.", love: "You are romantic and sensitive, but you need to express needs clearly." },
+      ENFJ: { role: "People Igniter", opener: "Your influence comes from helping others believe they can become better.", core: "You notice potential in people and naturally connect, organize, and encourage groups.", risk: "You may over-responsibilize and treat other people's growth as your duty.", love: "You give a lot and need sincere response, not one-sided caretaking." },
+      ENFP: { role: "Inspiration Engine", opener: "You are not inconsistent; you need a direction worthy of your fire.", core: "You see possibilities and connect people, stories, and opportunities quickly.", risk: "Monotony, closed systems, and no growth will make you lose energy fast.", love: "You need ease, honesty, and mental spark. Being defined too tightly makes you pull away." },
+      ISTJ: { role: "Stable Executor", opener: "Your reliability is not boring; it is the force that makes things land.", core: "You value facts, process, and responsibility, and you move goals forward steadily.", risk: "Constantly changing direction and unclear standards make you uneasy.", love: "You may not always use sweet words, but you prove seriousness through action." },
+      ISFJ: { role: "Gentle Guardian", opener: "Your strength is caring for details others do not notice.", core: "You are careful, reliable, and relationship-oriented, with a strong need for safety and appreciation.", risk: "Long-term over-giving, no thanks, and unclear boundaries create resentment.", love: "You are slow to open but serious once you do." },
+      ESTJ: { role: "Practical Organizer", opener: "You can turn chaos into order and take responsibility for outcomes.", core: "You value efficiency, rules, responsibility, and measurable results.", risk: "Too much abstraction, looseness, and unclear targets feel like wasted time.", love: "You often show love by solving problems; remember to keep warmth in the conversation." },
+      ESFJ: { role: "Relationship Organizer", opener: "You are not only caring; you understand how to keep a social system running.", core: "You read group needs, build trust, maintain relationships, and move cooperation forward.", risk: "Being stuck between conflicts without expressing yourself exhausts you.", love: "You need stable response and clear commitment, not hot-and-cold behavior." },
+      ISTP: { role: "Calm Problem Solver", opener: "You are strongest when facing a real problem and finding the most efficient fix.", core: "You value practical results, live judgment, and freedom to operate.", risk: "Emotional meetings, micromanagement, and no room to act make you detach.", love: "You need space and trust, not pressure to explain every feeling immediately." },
+      ISFP: { role: "Sensitive Maker", opener: "You are not random; you are highly sensitive to what feels real or fake.", core: "You use experience, aesthetics, and values to choose direction, then turn feeling into concrete work.", risk: "Rigid, purely practical environments without beauty or autonomy weaken you.", love: "You are gentle but have boundaries. You need respect, not being arranged." },
+      ESTP: { role: "Opportunity Catcher", opener: "You can move while others are still hesitating.", core: "You react fast and calibrate judgment through real markets, people, and situations.", risk: "Slow feedback, too much desk work, and too many rules make you feel trapped.", love: "You like direct, lively interaction, but need to avoid chasing only stimulation." },
+      ESFP: { role: "Experience Creator", opener: "You bring warmth to experiences and make people more willing to come closer.", core: "You read the room, notice reactions, and create lively human experiences.", risk: "Dull, repetitive, people-less work quickly drains your passion.", love: "You need warmth, presence, and real response, not cold distance." }
+    };
+    const zodiacProfilesEn = {
+      "白羊座": { traits: ["action-oriented","direct","pioneering"], emotion: "Your emotions rise quickly and recover quickly; being held back for too long frustrates you.", money: "You may spend on speed, experience, and opportunity; delayed decisions help you keep power.", growth: "Pause once before action and your drive becomes sharper." },
+      "金牛座": { traits: ["stability","aesthetic sense","stamina"], emotion: "You seem steady, but security and value exchange matter deeply.", money: "You are good at steady accumulation and quality investments.", growth: "Do not let fear of change block your upgrade." },
+      "双子座": { traits: ["curiosity","expression","fast learning"], emotion: "You process emotion through thinking and expression, but boredom drains you.", money: "You have many income ideas and may spend on novelty.", growth: "Turn inspiration into systems or assets." },
+      "巨蟹座": { traits: ["protective instinct","sensitivity","deep memory"], emotion: "You are sensitive to changes in environment and relationships, and need emotional safety.", money: "You often spend on family, space, and security.", growth: "Do not let old feelings stop you from choosing again." },
+      "狮子座": { traits: ["expressiveness","leadership","warmth"], emotion: "You need to be seen and appreciated, even when you pretend you are fine.", money: "You may spend on image, experience, and people you care about.", growth: "You do not need to prove yourself all the time; your work can speak." },
+      "处女座": { traits: ["detail focus","optimization","professional depth"], emotion: "You often turn anxiety into organizing, improving, and solving.", money: "You value practicality and cost-effectiveness.", growth: "Accept imperfection and move anyway." },
+      "天秤座": { traits: ["coordination","aesthetic sense","relationship sense"], emotion: "You notice relationship balance and may suppress preferences for harmony.", money: "You spend on beauty, social life, and quality of living.", growth: "Decide faster; not everyone has to be satisfied." },
+      "天蝎座": { traits: ["depth","strategy","loyalty"], emotion: "You remember emotions deeply and build trust slowly, but your commitment is strong.", money: "You suit long-term positioning, research, and professional monetization.", growth: "Not every uncertainty is danger." },
+      "射手座": { traits: ["freedom","exploration","optimism"], emotion: "You need space and a sense of horizon; restriction drains you quickly.", money: "You spend on experience, learning, and freedom.", growth: "Break the big vision into one step today." },
+      "摩羯座": { traits: ["long-term thinking","responsibility","achievement"], emotion: "You often hide emotions and prove yourself through results.", money: "You value assets, saving, and long-term return.", growth: "Do not be so hard on yourself that you forget life itself." },
+      "水瓶座": { traits: ["independence","innovation","systems thinking"], emotion: "You observe emotion rationally and need space to process complexity.", money: "You invest in tools, learning, and future trends.", growth: "Let people see your warmth, not only your ideas." },
+      "双鱼座": { traits: ["empathy","imagination","inspiration"], emotion: "You absorb environmental emotions easily and need clear boundaries.", money: "You may spend by feeling, so automatic saving helps.", growth: "Make dreams concrete and say boundaries clearly." }
+    };
+    const careerEn = {
+      "产品策略 / 用户增长": { summary: "Translate user needs, business goals, and resources into a clear path.", output: "Start with one competitor teardown, one user interview summary, and one growth experiment plan.", drain: "If the role becomes only chasing timelines and taking meeting notes, your judgment will be wasted." },
+      "数据分析 / 商业分析": { summary: "Use data to see the real problem instead of relying only on instinct.", output: "Start with three business questions and turn them into table or chart-based analysis cases.", drain: "If there is no business context and only mechanical reporting, you will get bored quickly." },
+      "UX 研究 / 用户洞察": { summary: "Understand why people choose what they choose, then turn hidden needs into product or service improvements.", output: "Start with five interviews and write a user persona, pain map, and improvement suggestions.", drain: "If the team does not value users and only wants pretty documents, your sense of meaning will drop." },
+      "品牌内容策略 / 小红书内容策划": { summary: "Package ideas, aesthetics, and audience psychology into content that can spread.", output: "Post around one theme for 14 days and observe which titles and topics get traction.", drain: "If you only chase trends without a main line, you will work hard without building assets." },
+      "客户成功 / 社群运营": { summary: "Maintain trust, help users succeed, and keep a group relationship system running.", output: "Design a user follow-up flow: welcome, activation, repeat purchase, feedback.", drain: "Handling emotions without boundaries may make you carry other people's problems." },
+      "项目运营 / 流程管理": { summary: "Turn messy tasks into process, timeline, ownership, and review.", output: "Turn one repeated task into an SOP and prove how much time it saves.", drain: "If leaders keep changing direction, uncertainty will wear you down." },
+      "销售顾问 / BD 合作": { summary: "Read real market signals, build trust, and move deals forward.", output: "Practice 20 discovery conversations and record why customers truly pay.", drain: "If the product is unreliable, you will not want to represent it." },
+      "知识产品 / 线上课程": { summary: "Turn your experience and methods into a repeatable learning path.", output: "Create a 7-day mini course or Notion template and test if people will pay.", drain: "If you keep giving for free without pricing or boundaries, you will feel drained." },
+      "视觉设计 / 品牌体验": { summary: "Turn abstract feelings into concrete visuals that make a product or content recognizable.", output: "Create three visual redesigns around one theme and explain the business logic behind them.", drain: "Vague client feedback and endless revisions can drain creative energy." },
+      "自动化工具 / AI 工作流顾问": { summary: "Use tools, workflow, and AI to turn repeated work into systems.", output: "Automate one real work scenario and record the before/after efficiency change.", drain: "If clients only want flashy tools and will not change process, projects will be hard to land." },
+      "HR 发展 / 人才培训": { summary: "Help people and teams find better ways to grow.", output: "Design a mini workshop for onboarding or communication training.", drain: "If the organization only performs harmony without solving real issues, you will feel blocked." },
+      "创业服务 / 个人品牌商业化": { summary: "Turn personal ability into services, content, products, and long-term trust.", output: "Choose one niche audience and test demand with a low-price service package.", drain: "Without rhythm management, you may try too many directions at once." },
+      "教育咨询 / 成长陪跑": { summary: "Combine understanding, structure, and support to help people change over time.", output: "Run three trial sessions and record where people need the most support.", drain: "Unclear boundaries can make you carry clients' life pressure." }
+    };
     const careerCatalog = [
       { name: "产品策略 / 用户增长", dimensions: ["N","T","J"], traits: ["系统","策略","创新","表达"], concerns: ["想提高收入","想开始创业","不知道什么工作适合我"], statuses: ["刚毕业","上班族","想转换跑道","创业者 / 老板"], summary: "把用户需求、商业目标和执行资源翻译成清晰路径。", output: "先做 1 个竞品拆解 + 1 个用户访谈总结 + 1 个增长实验方案。", drain: "如果岗位只剩催进度、写会议纪要，会浪费你的判断力。" },
       { name: "数据分析 / 商业分析", dimensions: ["I","T","J","S"], traits: ["专业","细节","策略","长期主义"], concerns: ["想提高收入","不知道什么工作适合我","觉得现在卡住了"], statuses: ["学生","刚毕业","上班族","想转换跑道"], summary: "用数据看清问题，而不是只凭感觉做决定。", output: "先整理 3 个业务问题，用表格或可视化做成分析案例。", drain: "如果没有业务背景，只做机械报表，你会很快觉得无聊。" },
@@ -560,6 +815,115 @@
         `
       }
     };
+    function t(key){ return ui[currentLang][key] || ui.zh[key] || key; }
+    function label(value){ return currentLang === "en" ? (labelEn[value] || value) : value; }
+    function joinLabels(values){ return values.map(label).join(currentLang === "en" ? ", " : "、"); }
+    function displayReport(r){
+      if(currentLang !== "en") {
+        return { ...r, displayTitle: r.title, displayZodiac: r.z, displayTraits: r.traits, profile: r.profile, zodiac: r.zodiac };
+      }
+      const profile = mbtiProfilesEn[r.mbti] || mbtiProfilesEn.INFJ;
+      const zodiac = zodiacProfilesEn[r.z] || zodiacProfilesEn["天蝎座"];
+      return {
+        ...r,
+        displayTitle: archetypeEn[r.title] || `${label(r.z)} ${profile.role}`,
+        displayZodiac: label(r.z),
+        displayTraits: zodiac.traits,
+        profile,
+        zodiac
+      };
+    }
+    function questionDisplay(q){
+      if(currentLang !== "en") return q;
+      return { ...q, ...(questionEn[q.key] || {}) };
+    }
+    function choiceDisplay(choice){ return label(choice); }
+    function careerDisplay(item){
+      if(currentLang !== "en") return item;
+      const translated = careerEn[item.name] || {};
+      return {
+        ...item,
+        name: label(item.name),
+        summary: translated.summary || item.summary,
+        output: translated.output || item.output,
+        drain: translated.drain || item.drain
+      };
+    }
+    function applyStaticLanguage(){
+      document.documentElement.lang = currentLang === "en" ? "en" : "zh-Hans";
+      const langToggle = document.getElementById("langToggle");
+      if(langToggle) langToggle.textContent = t("langButton");
+      const navStart = document.querySelector(".nav .btn.secondary");
+      if(navStart) navStart.textContent = t("navStart");
+      const heroPill = document.querySelector(".hero .pill");
+      const heroTitle = document.querySelector(".hero h1");
+      const heroText = document.querySelector(".hero p.muted");
+      if(heroPill) heroPill.textContent = t("heroPill");
+      if(heroTitle) heroTitle.textContent = t("heroTitle");
+      if(heroText) heroText.textContent = t("heroText");
+      const heroButtons = document.querySelectorAll(".hero .actions button");
+      if(heroButtons[0]) heroButtons[0].textContent = t("start");
+      if(heroButtons[1]) heroButtons[1].textContent = t("sample");
+      const heroSmall = document.querySelector(".hero .small");
+      if(heroSmall) heroSmall.textContent = t("completed");
+      document.querySelectorAll(".hero .pills .badge").forEach((badge, index) => badge.textContent = t("badges")[index] || badge.textContent);
+      const previewHead = document.querySelector(".preview-head b");
+      if(previewHead) previewHead.textContent = t("previewDone");
+      const previewLabel = document.querySelector(".preview div[style*='padding'] > p");
+      const previewTitle = document.querySelector(".preview h2");
+      const previewText = document.querySelector(".preview div[style*='padding'] > p.muted:nth-of-type(2)");
+      if(previewLabel) previewLabel.textContent = t("previewLabel");
+      if(previewTitle) previewTitle.textContent = t("previewTitle");
+      if(previewText) previewText.textContent = t("previewText");
+      document.querySelectorAll(".preview .locked").forEach((item, index) => item.textContent = t("locked")[index] || item.textContent);
+      const sampleTitle = document.querySelector("#sample h2");
+      if(sampleTitle) sampleTitle.textContent = t("sampleTitle");
+      document.querySelectorAll("#sample .card").forEach((card, index) => {
+        const copy = t("sampleCards")[index];
+        if(!copy) return;
+        const h3 = card.querySelector("h3");
+        const p = card.querySelector("p");
+        if(h3) h3.textContent = copy[0];
+        if(p) p.textContent = copy[1];
+      });
+      const progressBrand = document.querySelector("#app .progress .brand");
+      if(progressBrand) progressBrand.textContent = t("testBrand");
+      const backBtn = document.querySelector("#app .actions .btn.secondary");
+      if(backBtn) backBtn.textContent = t("back");
+      const analyzingTitle = document.querySelector("#analyzing h2");
+      const analyzingText = document.querySelector("#analyzing p.muted");
+      if(analyzingTitle) analyzingTitle.textContent = t("analyzingTitle");
+      if(analyzingText) analyzingText.textContent = t("analyzingText");
+      const resultLabel = document.querySelector("#result .report-cover > p");
+      if(resultLabel) resultLabel.textContent = t("resultLabel");
+      const resultCards = document.querySelectorAll("#result .grid-3 .card > p:first-child");
+      [t("core"), t("pace"), t("edge")].forEach((text, index) => { if(resultCards[index]) resultCards[index].textContent = text; });
+      const payCard = document.querySelector("#result .section > .card:last-child");
+      if(payCard) {
+        const h2 = payCard.querySelector("h2");
+        const p = payCard.querySelector("p.muted");
+        const b = payCard.querySelector(".payment-note b");
+        const small = payCard.querySelector(".payment-note .small");
+        if(h2) h2.textContent = t("payTitle");
+        if(p) p.textContent = t("payText");
+        if(b) b.textContent = t("paymentFriendly");
+        if(small) small.textContent = t("paymentNote");
+      }
+      document.querySelectorAll("#full .grid-2 .card h2").forEach((heading, index) => heading.textContent = t("fullHeadings")[index] || heading.textContent);
+      const printBtn = document.querySelector("#full .grid-2 .card:last-child button");
+      if(printBtn) printBtn.textContent = t("printPdf");
+      const footerText = document.querySelector(".legal-footer .small");
+      if(footerText) footerText.textContent = t("footer");
+      initializePaymentButton();
+    }
+    function toggleLanguage(){
+      currentLang = currentLang === "zh" ? "en" : "zh";
+      localStorage.setItem("astromind_lang", currentLang);
+      applyStaticLanguage();
+      if(document.getElementById("app").classList.contains("active")) renderStep();
+      if(!document.getElementById("result").classList.contains("hidden")) showResult();
+      if(!document.getElementById("full").classList.contains("hidden")) showFull();
+    }
     function startTest(){ document.getElementById("landing").classList.add("hidden"); document.getElementById("app").classList.add("active"); renderStep(); }
     function openLegal(type){
       const content = legalContent[type] || legalContent.disclaimer;
@@ -574,13 +938,16 @@
       return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
     }
     function renderStep(){
-      const q = questions[state.step]; document.getElementById("progress").style.width = ((state.step + 1) / questions.length * 100) + "%";
-      let html = `<h2>${q.title}</h2>`;
-      if(q.type === "input") html += `<div style="margin-top:18px"><input id="field" placeholder="${esc(q.placeholder)}" value="${esc(state[q.key] || "")}" oninput="state['${q.key}']=this.value"></div>`;
-      if(q.type === "choice") html += `<div class="choices">${q.choices.map(c => `<button class="choice ${state[q.key]===c?'selected':''}" onclick="state['${q.key}']='${c}';renderStep()">${c}</button>`).join("")}</div>`;
-      if(q.type === "likert") html += `<div class="choices likert">${[1,2,3,4,5].map(n => `<button class="choice ${state.answers[q.key]===n?'selected':''}" onclick="state.answers['${q.key}']=${n};renderStep()"><b>${n}</b><br>${["非常不同意","不同意","普通","同意","非常同意"][n-1]}</button>`).join("")}</div>`;
+      const q = questions[state.step];
+      const dq = questionDisplay(q);
+      const likertLabels = currentLang === "en" ? ["Strongly disagree","Disagree","Neutral","Agree","Strongly agree"] : ["非常不同意","不同意","普通","同意","非常同意"];
+      document.getElementById("progress").style.width = ((state.step + 1) / questions.length * 100) + "%";
+      let html = `<h2>${dq.title}</h2>`;
+      if(q.type === "input") html += `<div style="margin-top:18px"><input id="field" placeholder="${esc(dq.placeholder || "")}" value="${esc(state[q.key] || "")}" oninput="state['${q.key}']=this.value"></div>`;
+      if(q.type === "choice") html += `<div class="choices">${q.choices.map(c => `<button class="choice ${state[q.key]===c?'selected':''}" onclick="state['${q.key}']='${c}';renderStep()">${choiceDisplay(c)}</button>`).join("")}</div>`;
+      if(q.type === "likert") html += `<div class="choices likert">${[1,2,3,4,5].map(n => `<button class="choice ${state.answers[q.key]===n?'selected':''}" onclick="state.answers['${q.key}']=${n};renderStep()"><b>${n}</b><br>${likertLabels[n-1]}</button>`).join("")}</div>`;
       document.getElementById("stepCard").innerHTML = html;
-      document.getElementById("nextBtn").textContent = state.step === questions.length - 1 ? "生成我的报告" : "下一步";
+      document.getElementById("nextBtn").textContent = state.step === questions.length - 1 ? t("generate") : t("next");
     }
     function backStep(){ if(state.step>0){ state.step--; renderStep(); } }
     function nextStep(){ if(state.step < questions.length - 1){ state.step++; renderStep(); } else analyze(); }
@@ -600,10 +967,124 @@
         return false;
       }
     }
+    function getCustomerRecords(){
+      try {
+        return JSON.parse(localStorage.getItem(CUSTOMER_RECORDS_KEY) || "[]");
+      } catch(error) {
+        return [];
+      }
+    }
+    function saveCustomerRecords(records){
+      localStorage.setItem(CUSTOMER_RECORDS_KEY, JSON.stringify(records));
+      renderAdminPanel();
+    }
+    function getCustomerRecordId(){
+      if(!state.recordId) state.recordId = `AM-${Date.now()}-${Math.random().toString(36).slice(2,8).toUpperCase()}`;
+      return state.recordId;
+    }
+    function buildCustomerRecord(accessStatus){
+      const r = report();
+      const careers = buildCareerMatches(r).slice(0,5);
+      return {
+        recordId: getCustomerRecordId(),
+        submittedAt: new Date().toISOString(),
+        accessStatus,
+        paymentPrice: PAYMENT_CONFIG.priceLabel,
+        nickname: state.nickname || "",
+        email: state.email || "",
+        ageRange: state.age || "",
+        lifeStage: state.status || "",
+        currentConcern: state.concern || "",
+        typedMbti: state.mbti || "",
+        finalMbti: r.mbti,
+        mbtiConfidence: r.confidence,
+        zodiac: r.z,
+        archetype: r.title,
+        topCareer: careers[0]?.name || "",
+        careerMatches: careers.map(item => `${item.name} (${item.score}%)`).join(" | "),
+        relationshipNote: `${r.profile.love} ${r.zodiac.emotion}`,
+        answers: JSON.stringify(state.answers || {}),
+        sourceUrl: window.location.href.split("?")[0]
+      };
+    }
+    function upsertCustomerRecord(record){
+      const records = getCustomerRecords();
+      const index = records.findIndex(item => item.recordId === record.recordId);
+      if(index >= 0) records[index] = { ...records[index], ...record };
+      else records.push(record);
+      saveCustomerRecords(records);
+      sendCustomerRecord(record);
+    }
+    function sendCustomerRecord(record){
+      if(!COLLECTOR_CONFIG.enabled || !COLLECTOR_CONFIG.endpoint) return;
+      fetch(COLLECTOR_CONFIG.endpoint, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(record)
+      }).catch(() => {});
+    }
+    function recordCustomer(accessStatus){
+      upsertCustomerRecord(buildCustomerRecord(accessStatus));
+    }
+    function csvEscape(value){
+      const text = String(value ?? "");
+      return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    }
+    function downloadBlob(filename, content, type){
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+    function downloadCustomerCSV(){
+      const records = getCustomerRecords();
+      const headers = ["recordId","submittedAt","accessStatus","paymentPrice","nickname","email","ageRange","lifeStage","currentConcern","typedMbti","finalMbti","mbtiConfidence","zodiac","archetype","topCareer","careerMatches","relationshipNote","answers","sourceUrl"];
+      const rows = [headers.join(","), ...records.map(record => headers.map(key => csvEscape(record[key])).join(","))];
+      downloadBlob(`astromind-customer-records-${new Date().toISOString().slice(0,10)}.csv`, rows.join("\n"), "text/csv;charset=utf-8");
+    }
+    function downloadCustomerJSON(){
+      downloadBlob(`astromind-customer-records-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(getCustomerRecords(), null, 2), "application/json;charset=utf-8");
+    }
+    function clearCustomerRecords(){
+      if(!confirm("Clear all local customer records in this browser?")) return;
+      localStorage.removeItem(CUSTOMER_RECORDS_KEY);
+      renderAdminPanel();
+    }
+    function renderAdminPanel(){
+      const panel = document.getElementById("adminPanel");
+      if(!panel || panel.classList.contains("hidden")) return;
+      const records = getCustomerRecords().slice().reverse();
+      document.getElementById("adminSummary").textContent = records.length ? `${records.length} local record(s) saved in this browser.` : "No records yet.";
+      document.getElementById("adminRecords").innerHTML = records.slice(0,20).map(record => `
+        <tr>
+          <td>${esc(record.submittedAt || "")}</td>
+          <td>${esc(record.nickname || "")}</td>
+          <td>${esc(record.email || "")}</td>
+          <td>${esc(record.archetype || "")}</td>
+          <td>${esc(record.topCareer || "")}</td>
+          <td>${esc(record.accessStatus || "")}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="6">No records yet.</td></tr>`;
+    }
+    function maybeShowAdminPanel(){
+      const params = new URLSearchParams(window.location.search);
+      if(params.get("admin") !== "1") return;
+      const panel = document.getElementById("adminPanel");
+      if(panel) {
+        panel.classList.remove("hidden");
+        renderAdminPanel();
+      }
+    }
     function startPayment(){
       savePendingReport();
       if(!PAYMENT_CONFIG.paymentLink || PAYMENT_CONFIG.paymentLink.includes("PASTE_YOUR_PAYMENT_LINK_HERE")) {
-        alert("请先把代码里的 PAYMENT_CONFIG.paymentLink 换成你的真实付款链接。测试付款成功页面时，可以在网址后面加 ?paid=1。");
+        alert(t("alertPayment"));
         return;
       }
       window.location.href = PAYMENT_CONFIG.paymentLink;
@@ -613,7 +1094,7 @@
       const isPaid = ["1", "true", "yes", "success"].includes((params.get(PAYMENT_CONFIG.successParam) || "").toLowerCase());
       if(!isPaid) return;
       if(!restorePendingReport()) {
-        alert("付款成功，但没有找到刚才的测评资料。请重新完成测评。");
+        alert(t("alertRestore"));
         return;
       }
       document.getElementById("landing").classList.add("hidden");
@@ -624,7 +1105,7 @@
     }
     function initializePaymentButton(){
       const paymentBtn = document.getElementById("paymentBtn");
-      if(paymentBtn) paymentBtn.textContent = `付费解锁完整报告 · ${PAYMENT_CONFIG.priceLabel}`;
+      if(paymentBtn) paymentBtn.textContent = `${t("paymentButton")} · ${PAYMENT_CONFIG.priceLabel}`;
     }
     function getAnswerScores(){
       const scores = { E:0, I:0, S:0, N:0, T:0, F:0, J:0, P:0 };
@@ -653,7 +1134,12 @@
     function getAxisSignals(mbti){
       const scores = getAnswerScores();
       const letters = mbti.split("");
-      const pairs = [
+      const pairs = currentLang === "en" ? [
+        { key: "Energy Source", a: "E", b: "I", text: { E: "Interaction helps you calibrate ideas faster, so feedback-rich environments suit you.", I: "You need alone time and deep input; too much instant socializing lowers your judgment quality." } },
+        { key: "Information Style", a: "S", b: "N", text: { S: "You trust evidence and workable steps, so you are good at turning ideas into practical flow.", N: "You naturally look for trends, hidden meaning, and future possibilities." } },
+        { key: "Decision Style", a: "T", b: "F", text: { T: "You value logic, efficiency, and cause-and-effect, which helps in clear judgment tasks.", F: "You value meaning, feelings, and relationship impact, which helps with people and experience work." } },
+        { key: "Action Rhythm", a: "J", b: "P", text: { J: "You perform best when goals, timelines, and priorities are clear.", P: "You need flexibility and exploration space; being locked in too early weakens creativity." } }
+      ] : [
         { key: "能量来源", a: "E", b: "I", text: { E: "越互动越容易校准想法，适合有反馈、有沟通的场景。", I: "需要独处整理和深度输入，太多即时社交会降低判断质量。" } },
         { key: "信息处理", a: "S", b: "N", text: { S: "更相信现实证据和可执行步骤，适合把事情落到具体流程。", N: "会自然寻找趋势、隐含意义和未来可能性，适合做抽象连接。" } },
         { key: "决策方式", a: "T", b: "F", text: { T: "更重视逻辑、效率和因果，适合需要清晰判断的任务。", F: "更重视价值、感受和关系影响，适合处理人和体验相关问题。" } },
@@ -671,14 +1157,21 @@
       const z = state.zodiac || "天蝎座";
       const zodiac = zodiacProfiles[z] || zodiacProfiles["天蝎座"];
       const title = archetypes[`${mbti}-${z}`] || `${zodiac.traits[0]}${profile.role}`;
-      const concernAdvice = {
+      const concernAdvice = (currentLang === "en" ? {
+        "不知道什么工作适合我": "Right now, you do not need to choose a forever path immediately. You need to identify which work gives you energy and which work only drains you.",
+        "觉得现在卡住了": "Feeling stuck usually does not mean you lack ability. It often means your current environment is not giving your strongest side enough room.",
+        "想提高收入": "Your income breakthrough is more likely to come from monetizing skills, building proof of work, and choosing a path with a stronger growth curve.",
+        "想开始创业": "You suit small-scale validation first: turn passion into repeatable products, services, or content assets.",
+        "想要更好的生活平衡": "You do not only need less work; you need less low-meaning energy drain and more tasks with real return.",
+        "想更了解自己": "Spend time observing what gives you energy and what makes you feel less like yourself."
+      } : {
         "不知道什么工作适合我": "你现在最需要的不是马上定终身，而是找出哪些工作会放大你的能量，哪些只是在消耗你。",
         "觉得现在卡住了": "卡住通常不是因为你没有能力，而是你现在的环境没有给你的核心优势足够出口。",
         "想提高收入": "你的收入突破点更可能来自专业能力变现、作品/案例积累，以及选择更有成长曲线的环境。",
         "想开始创业": "你适合先做小规模验证，把热情变成可重复的产品、服务或内容资产。",
         "想要更好的生活平衡": "你需要的不只是少工作，而是减少低意义消耗，把精力放在更有回报的任务上。",
         "想更了解自己": "你适合用一段时间观察：什么让你有能量，什么让你越来越不像自己。"
-      }[state.concern] || "你需要一个能验证自己能力、也允许你保留节奏的下一步。";
+      })[state.concern] || (currentLang === "en" ? "You need a next step that can test your ability while respecting your rhythm." : "你需要一个能验证自己能力、也允许你保留节奏的下一步。");
       const axisSignals = getAxisSignals(mbti);
       return { mbti, confidence: mbtiResult.confidence, boundary: mbtiResult.boundary, z, zodiac, traits: zodiac.traits, title, profile, concernAdvice, axisSignals };
     }
@@ -701,6 +1194,22 @@
       }).sort((a,b) => b.score - a.score);
     }
     function careerWhy(item, r){
+      if(currentLang === "en") {
+        const axisCopy = {
+          E: "you grow faster through real interaction and external feedback",
+          I: "you are suited to deep thinking before delivering high-quality judgment",
+          S: "you can turn ideas into process, detail, and concrete results",
+          N: "you are good at seeing trends, connections, and redefining problems",
+          T: "you filter choices through logic and efficiency",
+          F: "you can read human needs, emotions, and value signals",
+          J: "you perform strongly when goals, plans, and reviews are clear",
+          P: "you find opportunities through quick testing and flexibility"
+        };
+        const axisReason = item.matchedDimensions.slice(0,2).map(d => axisCopy[d]).join("; ");
+        const matchedTraits = item.matchedTraits.map(label);
+        const traitReason = matchedTraits.length ? `Your ${label(r.z)} traits include ${matchedTraits.join(", ")}, which strengthens this direction.` : `This direction can help solve your current focus: ${label(state.concern || "direction")}.`;
+        return `${axisReason || displayReport(r).profile.core}. ${traitReason}`;
+      }
       const axisCopy = {
         E: "你需要真实互动和外部反馈来加速成长",
         I: "你适合先深挖问题，再拿出有分量的判断",
@@ -716,6 +1225,18 @@
       return `${axisReason || r.profile.core}。${traitReason}`;
     }
     function actionByStage(item){
+      if(currentLang === "en") {
+        const displayItem = careerDisplay(item);
+        const copy = {
+          "学生": `Use a school project, club, or internship to create a minimum case: ${displayItem.output}`,
+          "刚毕业": `Do not chase a big title too early. Build a 30-day proof-of-work piece: ${displayItem.output}`,
+          "上班族": `Turn the closest task in your current job into a case study so your next move has evidence: ${displayItem.output}`,
+          "创业者 / 老板": `Package it into a small service or product and use real customer feedback to refine positioning: ${displayItem.output}`,
+          "想转换跑道": `Validate with a side project, portfolio piece, or short project before changing everything: ${displayItem.output}`,
+          "还不确定": `Run a light one-week experiment and notice whether it energizes you or makes you want to escape: ${displayItem.output}`
+        };
+        return copy[state.status] || displayItem.output;
+      }
       const copy = {
         "学生": `从校园项目、社团或实习里做一个最小案例：${item.output}`,
         "刚毕业": `不要急着追大 title，先用 30 天做出能展示能力的作品：${item.output}`,
@@ -732,6 +1253,55 @@
       const isN = letters.includes("N");
       const isT = letters.includes("T");
       const isJ = letters.includes("J");
+      if(currentLang === "en") {
+        const d = displayReport(r);
+        const socialMode = isE
+          ? "You open up more easily in groups with shared goals, and interaction helps you test whether your ideas are landing."
+          : "You do need people, but you need higher-quality connection. Too much shallow socializing can make you feel lonelier.";
+        const conflict = isT
+          ? "In conflict, you may analyze the issue first, but the other person may hear it as coldness. Acknowledge feelings before solutions."
+          : "In conflict, you may protect the atmosphere first and push your own needs to the end. Speak your boundary earlier.";
+        const intimacy = isJ
+          ? "You suit stable, explicit relationships with commitment. Long ambiguity or changing rules creates mental noise."
+          : "You suit flexible relationships where both people can explore. Being arranged or defined too early makes you pull away.";
+        const mindNeed = isN
+          ? "You need mental connection: future, values, life choices, and meaningful conversations."
+          : "You need reliability in daily life: follow-through, practical care, and steady presence matter more than vague promises.";
+        const concernLayer = {
+          "不知道什么工作适合我": "When career direction is unclear, you care whether someone believes in your potential instead of judging only your current position.",
+          "觉得现在卡住了": "When you feel stuck, you need someone who helps you regain action, not someone who keeps pointing out what is missing.",
+          "想提高收入": "When income growth becomes the focus, you may postpone emotional needs; schedule regular communication so the relationship does not become purely transactional.",
+          "想开始创业": "Business-building magnifies pressure, so you need someone who understands uncertainty and also reminds you to rest.",
+          "想要更好的生活平衡": "You do not need a relationship that becomes a second job; you need a place where your nervous system can soften.",
+          "想更了解自己": "You suit a relationship that reflects you gently instead of defining you too quickly."
+        }[state.concern] || "You need to be understood while keeping your own rhythm.";
+        const ideal = [
+          isT ? "Someone who can communicate rationally without treating your emotional needs as a problem" : "Someone emotionally steady, responsive, and respectful of your sensitivity",
+          isJ ? "Someone consistent, reliable, and clear with boundaries" : "Someone who does not control you and is willing to explore new ways of living",
+          r.traits.includes("忠诚") || r.traits.includes("稳定") ? "Someone steady over time, not hot-and-cold" : "Someone who appreciates your changing and multi-layered nature"
+        ];
+        const socialAdvice = isE
+          ? "Socially, focus on a few circles that bring opportunity and inspiration; not every lively event is useful networking."
+          : "Socially, you suit small circles, deep conversations, and one-on-one connection. Quality matters more than volume.";
+        return `
+          <div class="relationship-card">
+            <h3>Intimacy Pattern</h3>
+            <p class="muted">${d.profile.love} ${intimacy} ${mindNeed}</p>
+          </div>
+          <div class="relationship-card">
+            <h3>Conflict Trigger</h3>
+            <p class="muted">${conflict} On the zodiac layer, ${d.zodiac.emotion} ${concernLayer}</p>
+          </div>
+          <div class="relationship-card">
+            <h3>Who Fits You Better</h3>
+            <ul>${ideal.map(x => `<li>${x}</li>`).join("")}</ul>
+          </div>
+          <div class="relationship-card">
+            <h3>Social Boundary</h3>
+            <p class="muted">${socialMode} ${socialAdvice}</p>
+          </div>
+        `;
+      }
       const socialMode = isE
         ? "你在熟悉或有共同目标的人群里会更容易打开，互动能帮你确认自己想法是否成立。"
         : "你不是不需要人，而是需要高质量连接；太频繁、太浅的社交会让你反而更孤独。";
@@ -780,56 +1350,80 @@
       `;
     }
     function buildGrowthPlan(r, topCareer){
+      if(currentLang === "en") {
+        const career = careerDisplay(topCareer);
+        return `Week 1: Track your energy and identify which tasks make you feel more like yourself. Week 2: Build one small proof-of-work piece around "${career.name}". Week 3: Ask 3 people for feedback and refine positioning. Week 4: Decide whether to keep, scale, or change direction.`;
+      }
       return `Week 1 记录能量变化，确认哪些任务让你更像自己。Week 2 围绕「${topCareer.name}」做一个小作品。Week 3 找 3 个人收反馈，修正定位。Week 4 决定保留、放大或换方向。`;
     }
     function showResult(){
       const r = report();
+      const d = displayReport(r);
       document.getElementById("analyzing").classList.remove("active"); document.getElementById("result").classList.remove("hidden");
-      document.getElementById("archetype").textContent = r.title;
-      document.getElementById("summary").textContent = `${state.nickname || "你"}，${r.profile.opener} ${r.concernAdvice} ${r.boundary ? "你的 MBTI 结果接近边界型，说明你在不同环境下会展现不同面向。" : ""}`;
-      document.getElementById("keywords").innerHTML = [r.mbti, `信心 ${r.confidence}%`, r.z, ...r.traits].map(x => `<span class="badge">${x}</span>`).join("");
-      document.getElementById("coreTitle").textContent = r.traits[0];
-      document.getElementById("coreText").textContent = `${r.profile.core} 星座层面，${r.z} 让你的情绪底色更偏向「${r.traits.join("、")}」。`;
+      document.getElementById("archetype").textContent = d.displayTitle;
+      document.getElementById("summary").textContent = currentLang === "en"
+        ? `${state.nickname || "You"}, ${d.profile.opener} ${r.concernAdvice} ${r.boundary ? "Your MBTI result is close to a boundary, which means different environments may bring out different sides of you." : ""}`
+        : `${state.nickname || "你"}，${r.profile.opener} ${r.concernAdvice} ${r.boundary ? "你的 MBTI 结果接近边界型，说明你在不同环境下会展现不同面向。" : ""}`;
+      document.getElementById("keywords").innerHTML = [r.mbti, `${t("confidence")} ${r.confidence}%`, d.displayZodiac, ...d.displayTraits].map(x => `<span class="badge">${x}</span>`).join("");
+      document.getElementById("coreTitle").textContent = d.displayTraits[0];
+      document.getElementById("coreText").textContent = currentLang === "en"
+        ? `${d.profile.core} On the zodiac layer, ${d.displayZodiac} gives your emotional tone more of: ${d.displayTraits.join(", ")}.`
+        : `${r.profile.core} 星座层面，${r.z} 让你的情绪底色更偏向「${r.traits.join("、")}」。`;
       const signals = r.axisSignals;
-      document.getElementById("paceTitle").textContent = signals[3].code === "J" ? "结构清楚时更强" : "弹性探索时更强";
+      document.getElementById("paceTitle").textContent = currentLang === "en" ? (signals[3].code === "J" ? "Stronger With Structure" : "Stronger With Flexibility") : (signals[3].code === "J" ? "结构清楚时更强" : "弹性探索时更强");
       document.getElementById("paceText").textContent = `${signals[3].text} ${signals[0].text}`;
-      document.getElementById("edgeTitle").textContent = signals[1].code === "N" ? "看见可能性" : "稳定落地";
+      document.getElementById("edgeTitle").textContent = currentLang === "en" ? (signals[1].code === "N" ? "Seeing Possibilities" : "Stable Execution") : (signals[1].code === "N" ? "看见可能性" : "稳定落地");
       document.getElementById("edgeText").textContent = `${signals[1].text} ${signals[2].text}`;
+      recordCustomer("free_result_generated");
       window.scrollTo(0,0);
     }
     function showFull(){
       const r = report();
       const careers = buildCareerMatches(r).slice(0,5);
+      const d = displayReport(r);
       document.getElementById("result").classList.add("hidden"); document.getElementById("full").classList.remove("hidden");
-      document.getElementById("fullTitle").textContent = r.title;
-      document.getElementById("fullMeta").textContent = `${state.nickname || "匿名用户"} · ${r.mbti} + ${r.z} · MBTI 信心 ${r.confidence}% · ${state.email || "未填写 Gmail"} · Premium 测试报告`;
-      document.getElementById("fullPersonality").textContent = `${r.profile.core} ${r.profile.risk} 情绪层面，${r.zodiac.emotion} ${r.zodiac.growth}`;
+      document.getElementById("fullTitle").textContent = d.displayTitle;
+      document.getElementById("fullMeta").textContent = currentLang === "en"
+        ? `${state.nickname || t("anonymous")} · ${r.mbti} + ${d.displayZodiac} · MBTI ${t("confidence")} ${r.confidence}% · ${state.email || "No email"} · Premium Beta Report`
+        : `${state.nickname || "匿名用户"} · ${r.mbti} + ${r.z} · MBTI 信心 ${r.confidence}% · ${state.email || "未填写 Gmail"} · Premium 测试报告`;
+      document.getElementById("fullPersonality").textContent = currentLang === "en"
+        ? `${d.profile.core} ${d.profile.risk} Emotionally, ${d.zodiac.emotion} ${d.zodiac.growth}`
+        : `${r.profile.core} ${r.profile.risk} 情绪层面，${r.zodiac.emotion} ${r.zodiac.growth}`;
       document.getElementById("axisSignals").innerHTML = r.axisSignals.map(s => `<div class="signal"><b>${s.title} ${s.code} · ${s.confidence}%</b><p class="muted" style="margin:8px 0 0">${s.text}</p></div>`).join("");
-      document.getElementById("careerIntro").textContent = `以下推荐不是只看 ${r.mbti}，而是同时整合你的星座特质「${r.traits.join("、")}」、人生阶段「${state.status || "未填写"}」和当前重点「${state.concern || "未填写"}」。`;
+      document.getElementById("careerIntro").textContent = currentLang === "en"
+        ? `These recommendations are not based only on ${r.mbti}; they combine your zodiac traits (${d.displayTraits.join(", ")}), life stage (${label(state.status || t("notProvided"))}), and current focus (${label(state.concern || t("notProvided"))}).`
+        : `以下推荐不是只看 ${r.mbti}，而是同时整合你的星座特质「${r.traits.join("、")}」、人生阶段「${state.status || "未填写"}」和当前重点「${state.concern || "未填写"}」。`;
       document.getElementById("careers").innerHTML = careers.map(item => `
         <div class="career-card">
           <div class="career-top">
             <div>
-              <h3>${item.name}</h3>
-              <p class="muted" style="margin:8px 0 0">${item.summary}</p>
+              <h3>${careerDisplay(item).name}</h3>
+              <p class="muted" style="margin:8px 0 0">${careerDisplay(item).summary}</p>
             </div>
             <span class="match">${item.score}% match</span>
           </div>
           <ul>
-            <li><b>为什么像你：</b>${careerWhy(item, r)}</li>
-            <li><b>下一步：</b>${actionByStage(item)}</li>
-            <li><b>避坑：</b>${item.drain}</li>
+            <li><b>${currentLang === "en" ? "Why it fits: " : "为什么像你："}</b>${careerWhy(item, r)}</li>
+            <li><b>${currentLang === "en" ? "Next step: " : "下一步："}</b>${actionByStage(item)}</li>
+            <li><b>${currentLang === "en" ? "Watch out: " : "避坑："}</b>${careerDisplay(item).drain}</li>
           </ul>
         </div>
       `).join("");
-      document.getElementById("wealthText").textContent = `${r.zodiac.money} 结合你的 ${r.mbti} 倾向，你更适合用「能力沉淀 + 可展示作品 + 长期信用」来提高收入。短期机会可以试，但不要让它打乱你的核心积累。`;
+      document.getElementById("wealthText").textContent = currentLang === "en"
+        ? `${d.zodiac.money} Combined with your ${r.mbti} tendency, you are better suited to increasing income through skill depth, visible proof of work, and long-term trust. Short-term opportunities are fine to test, but they should not disrupt your core accumulation.`
+        : `${r.zodiac.money} 结合你的 ${r.mbti} 倾向，你更适合用「能力沉淀 + 可展示作品 + 长期信用」来提高收入。短期机会可以试，但不要让它打乱你的核心积累。`;
       document.getElementById("relationship").innerHTML = buildRelationshipReport(r);
       document.getElementById("growthPlan").textContent = buildGrowthPlan(r, careers[0]);
-      document.getElementById("shareLine").textContent = `我的隐藏人格是：${r.title} · ${r.mbti} · ${r.z} · 最匹配职业：${careers[0].name}`;
+      document.getElementById("shareLine").textContent = currentLang === "en"
+        ? `My hidden personality: ${d.displayTitle} · ${r.mbti} · ${d.displayZodiac} · Top career match: ${careerDisplay(careers[0]).name}`
+        : `我的隐藏人格是：${r.title} · ${r.mbti} · ${r.z} · 最匹配职业：${careers[0].name}`;
+      recordCustomer("premium_report_unlocked");
       window.scrollTo(0,0);
     }
     window.addEventListener("DOMContentLoaded", () => {
+      applyStaticLanguage();
       initializePaymentButton();
+      maybeShowAdminPanel();
       checkPaidReturn();
       document.getElementById("legalModal").addEventListener("click", event => {
         if(event.target.id === "legalModal") closeLegal();
