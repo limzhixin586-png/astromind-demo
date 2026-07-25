@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>我的 AstroMind 人格卡</title>
+  <meta name="description" content="查看一张公开的 AstroMind 人格结果卡，并进入同频空间。" />
+  <meta name="theme-color" content="#050505" />
+  <link rel="stylesheet" href="assets/community.css" />
+</head>
+<body>
+  <main class="share-page">
+    <section class="share-stage">
+      <article class="share-card" id="shareCard">
+        <div class="share-card-top"><span>AstroMind / Public Card</span><span id="cardMbtiTop">----</span></div>
+        <div>
+          <p class="share-card-name" id="cardName">匿名用户的人格结果</p>
+          <h1 id="cardTitle">隐藏人格</h1>
+          <p class="share-card-line" id="cardLine">这是一张公开分享卡，不包含完整报告或私人资料。</p>
+          <div class="share-tags" id="cardTags"></div>
+        </div>
+        <div class="share-code">
+          <p>人格标签适合开启对话，不适合决定能力、关系或未来。扫码区将在正式域名上线后接入。</p>
+          <div class="share-code-box">ASTROMIND<br />SHARE</div>
+        </div>
+      </article>
+    </section>
+
+    <aside class="share-controls">
+      <a class="brand-link" href="index.html">AstroMind <span>/ 分享卡</span></a>
+      <h2>把结果变成一次有趣的对话。</h2>
+      <p>公开卡只显示昵称、MBTI、星座、人格标题与兴趣代码。不会包含 Email、生日、付款资料、题目答案或完整报告。</p>
+      <div class="share-actions">
+        <button class="button" id="downloadCardButton" type="button">下载图片</button>
+        <button class="button secondary" id="copyLinkButton" type="button">复制分享链接</button>
+        <button class="button secondary" id="systemShareButton" type="button">使用系统分享</button>
+        <a class="button secondary" id="communityLink" href="community.html">进入同频空间</a>
+      </div>
+      <div class="share-privacy">
+        <p class="eyebrow">PUBLIC BY DESIGN</p>
+        <p>分享之前仍建议检查昵称是否适合公开。人格报告仅供自我反思与娱乐，不构成心理、医学或职业建议。</p>
+      </div>
+      <p class="form-error" id="shareStatus" role="status"></p>
+    </aside>
+  </main>
+
+  <canvas id="shareCanvas" width="1080" height="1350" class="hidden"></canvas>
+  <script src="assets/share.js"></script>
+</body>
+</html>

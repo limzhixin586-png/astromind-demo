@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>登入｜AstroMind</title>
+  <meta name="description" content="登入 AstroMind，保存你的測評結果並進入同頻空間。" />
+  <meta name="theme-color" content="#0b0b0d" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #09090b;
+      --paper: #f7f5ef;
+      --paper-muted: rgba(247, 245, 239, .68);
+      --line: rgba(255, 255, 255, .18);
+      --line-strong: rgba(255, 255, 255, .34);
+      --glass: rgba(12, 12, 15, .72);
+      --glass-deep: rgba(9, 9, 11, .9);
+      --focus: #d7c6ff;
+      --wechat: #07c160;
+      --danger: #ffb4ab;
+      --ease: cubic-bezier(.2, .75, .2, 1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-width: 320px;
+      background: var(--ink);
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--paper);
+      background: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button { font: inherit; }
+
+    .skip-link {
+      position: fixed;
+      left: 16px;
+      top: 12px;
+      z-index: 50;
+      padding: 10px 14px;
+      color: var(--ink);
+      background: white;
+      border-radius: 999px;
+      transform: translateY(-160%);
+      transition: transform .2s ease;
+    }
+
+    .skip-link:focus { transform: translateY(0); }
+
+    .page {
+      position: relative;
+      isolation: isolate;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: hidden;
+    }
+
+    .cosmos {
+      position: absolute;
+      inset: -5%;
+      z-index: -3;
+      background:
+        linear-gradient(90deg, rgba(4, 4, 6, .86) 0%, rgba(4, 4, 6, .36) 50%, rgba(4, 4, 6, .76) 100%),
+        linear-gradient(180deg, rgba(4, 4, 6, .18), rgba(4, 4, 6, .88)),
+        url("assets/astromind-liquid-cosmos.webp") center 56% / cover no-repeat;
+      transform: scale(1.05);
+      animation: cosmosBreath 16s var(--ease) infinite alternate;
+    }
+
+    .cosmos::before,
+    .cosmos::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .cosmos::before {
+      opacity: .7;
+      background:
+        radial-gradient(circle at 18% 24%, rgba(184, 153, 255, .16), transparent 26%),
+        radial-gradient(circle at 78% 68%, rgba(237, 199, 117, .13), transparent 24%);
+      mix-blend-mode: screen;
+    }
+
+    .cosmos::after {
+      opacity: .36;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+    }
+
+    .topbar,
+    .footer {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 78px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand,
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 48px;
+      color: var(--paper);
+      text-decoration: none;
+    }
+
+    .brand {
+      font-size: 15px;
+      font-weight: 650;
+      letter-spacing: -.01em;
+    }
+
+    .brand span {
+      margin-left: 10px;
+      color: var(--paper-muted);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .back-link {
+      gap: 8px;
+      color: var(--paper-muted);
+      font-size: 13px;
+      transition: color .2s ease;
+    }
+
+    .back-link svg { transition: transform .2s var(--ease); }
+    .back-link:hover { color: white; }
+    .back-link:hover svg { transform: translateX(-3px); }
+
+    .main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 456px);
+      gap: clamp(48px, 8vw, 132px);
+      align-items: center;
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: clamp(48px, 8vh, 94px) 0;
+    }
+
+    .intro { max-width: 650px; }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 24px;
+      color: var(--paper-muted);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      width: 34px;
+      height: 1px;
+      content: "";
+      background: currentColor;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 620px;
+      font-family: Georgia, "Times New Roman", "Songti SC", serif;
+      font-size: clamp(58px, 7.5vw, 112px);
+      font-weight: 400;
+      letter-spacing: -.065em;
+      line-height: .88;
+    }
+
+    .intro-copy {
+      max-width: 510px;
+      margin: 32px 0 0;
+      color: rgba(255, 255, 255, .72);
+      font-size: clamp(16px, 1.5vw, 19px);
+      line-height: 1.72;
+    }
+
+    .benefits {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 22px;
+      margin: 30px 0 0;
+      padding: 0;
+      color: rgba(255, 255, 255, .64);
+      font-size: 12px;
+      list-style: none;
+    }
+
+    .benefits li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .benefits li::before {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      content: "";
+      background: rgba(255, 255, 255, .78);
+      box-shadow: 0 0 12px rgba(215, 198, 255, .8);
+    }
+
+    .auth-card {
+      position: relative;
+      padding: clamp(28px, 4vw, 44px);
+      border: 1px solid var(--line-strong);
+      border-radius: 28px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .025) 42%),
+        var(--glass);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, .36);
+      backdrop-filter: blur(24px) saturate(1.1);
+      -webkit-backdrop-filter: blur(24px) saturate(1.1);
+    }
+
+    .auth-card::before {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      content: "";
+      pointer-events: none;
+      background: radial-gradient(circle at 82% 0%, rgba(215, 198, 255, .13), transparent 34%);
+    }
+
+    .card-index {
+      margin: 0 0 34px;
+      color: rgba(255, 255, 255, .5);
+      font-size: 10px;
+      font-weight: 650;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", "Songti SC", serif;
+      font-size: clamp(34px, 4vw, 48px);
+      font-weight: 400;
+      letter-spacing: -.045em;
+      line-height: 1;
+    }
+
+    .card-copy {
+      margin: 15px 0 28px;
+      color: var(--paper-muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .provider-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .provider-button {
+      position: relative;
+      display: grid;
+      grid-template-columns: 28px 1fr 28px;
+      align-items: center;
+      width: 100%;
+      min-height: 58px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 10px 18px;
+      color: #171719;
+      background: #fff;
+      font-size: 14px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: transform .2s var(--ease), box-shadow .2s ease, border-color .2s ease, opacity .2s ease;
+    }
+
+    .provider-button.wechat {
+      color: #fff;
+      background: var(--wechat);
+    }
+
+    .provider-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, .25);
+    }
+
+    .provider-button:active { transform: scale(.985); }
+
+    .provider-button:disabled {
+      opacity: .68;
+      cursor: wait;
+      transform: none;
+    }
+
+    .provider-button > span { text-align: center; }
+    .provider-icon { display: grid; place-items: center; width: 28px; height: 28px; }
+    .provider-icon svg { display: block; width: 23px; height: 23px; }
+
+    .arrow {
+      display: grid;
+      place-items: center;
+      color: currentColor;
+      opacity: .5;
+    }
+
+    .spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    .provider-button.loading .arrow { display: none; }
+    .provider-button.loading .spinner { display: block; }
+
+    .status {
+      min-height: 42px;
+      margin: 18px 2px 0;
+      color: var(--paper-muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .status[data-tone="error"] { color: var(--danger); }
+
+    .legal {
+      margin: 4px 0 0;
+      color: rgba(255, 255, 255, .48);
+      font-size: 11px;
+      line-height: 1.65;
+    }
+
+    .legal button {
+      min-height: 44px;
+      border: 0;
+      padding: 0 3px;
+      color: rgba(255, 255, 255, .76);
+      background: transparent;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+
+    .privacy-note {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-top: 22px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      color: rgba(255, 255, 255, .56);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .privacy-note svg {
+      flex: 0 0 auto;
+      width: 16px;
+      height: 16px;
+      margin-top: 1px;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 20px 0 26px;
+      border-top: 1px solid var(--line);
+      color: rgba(255, 255, 255, .48);
+      font-size: 10px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .dialog-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, .68);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .dialog-backdrop[hidden] { display: none; }
+
+    .dialog {
+      width: min(100%, 440px);
+      padding: 28px;
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      color: var(--paper);
+      background: var(--glass-deep);
+      box-shadow: 0 28px 90px rgba(0, 0, 0, .5);
+    }
+
+    .dialog h3 {
+      margin: 0 0 12px;
+      font-family: Georgia, "Times New Roman", "Songti SC", serif;
+      font-size: 28px;
+      font-weight: 400;
+    }
+
+    .dialog p {
+      margin: 0;
+      color: var(--paper-muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .dialog-close {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 22px;
+      border: 1px solid rgba(255, 255, 255, .4);
+      border-radius: 999px;
+      color: var(--ink);
+      background: #fff;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 4px;
+    }
+
+    @keyframes cosmosBreath {
+      from { transform: scale(1.04) translate3d(-.4%, -.2%, 0); }
+      to { transform: scale(1.09) translate3d(.5%, .35%, 0); }
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 860px) {
+      .main {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        width: min(620px, calc(100% - 32px));
+        padding: 50px 0 54px;
+      }
+
+      .intro { text-align: center; }
+      .eyebrow { justify-content: center; }
+      .intro-copy { margin-right: auto; margin-left: auto; }
+      .benefits { justify-content: center; }
+      .auth-card { width: 100%; }
+    }
+
+    @media (max-width: 560px) {
+      .topbar,
+      .footer { width: calc(100% - 32px); }
+      .topbar { min-height: 66px; }
+      .brand span { display: none; }
+      .main { padding-top: 38px; }
+      h1 { font-size: clamp(52px, 17vw, 78px); }
+      .intro-copy { margin-top: 24px; font-size: 16px; }
+      .benefits { margin-top: 22px; }
+      .auth-card { padding: 28px 20px 24px; border-radius: 22px; }
+      .card-index { margin-bottom: 24px; }
+      .footer { flex-direction: column; gap: 8px; }
+    }
+
+    @media (max-height: 760px) and (min-width: 861px) {
+      .main { padding-top: 38px; padding-bottom: 38px; }
+      .intro-copy { margin-top: 22px; }
+      .benefits { margin-top: 20px; }
+      .auth-card { padding-top: 30px; padding-bottom: 30px; }
+      .card-index { margin-bottom: 22px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#authCard">跳到登入選項</a>
+  <div class="page">
+    <div class="cosmos" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="返回 AstroMind 首頁">
+        AstroMind <span>Identity · Direction · Connection</span>
+      </a>
+      <a class="back-link" href="index.html">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        返回首頁
+      </a>
+    </header>
+
+    <main class="main">
+      <section class="intro" aria-labelledby="pageTitle">
+        <p class="eyebrow">Your private constellation</p>
+        <h1 id="pageTitle">保存你的<br />內在星圖。</h1>
+        <p class="intro-copy">登入後，你的測評進度、完整報告與同頻身份都能安全地跟著你，在不同裝置繼續探索。</p>
+        <ul class="benefits" aria-label="登入後的功能">
+          <li>同步測評結果</li>
+          <li>保存完整報告</li>
+          <li>進入同頻空間</li>
+        </ul>
+      </section>
+
+      <section class="auth-card" id="authCard" aria-labelledby="authTitle">
+        <p class="card-index">01 / SECURE ACCESS</p>
+        <h2 id="authTitle">歡迎回來</h2>
+        <p class="card-copy">選擇你熟悉的方式登入，不需要另外建立密碼。</p>
+
+        <div class="provider-list">
+          <button class="provider-button" type="button" data-provider="google">
+            <span class="provider-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.4-.18-2.06H12v3.9h5.38a4.6 4.6 0 0 1-2 3.02v2.53h3.24c1.9-1.75 2.98-4.33 2.98-7.39z"/>
+                <path fill="#34A853" d="M12 22c2.7 0 4.98-.9 6.64-2.42l-3.24-2.53c-.9.6-2.05.96-3.4.96-2.6 0-4.81-1.76-5.6-4.12H3.05v2.61A10 10 0 0 0 12 22z"/>
+                <path fill="#FBBC05" d="M6.4 13.9a6 6 0 0 1 0-3.8V7.5H3.05a10 10 0 0 0 0 9l3.35-2.6z"/>
+                <path fill="#EA4335" d="M12 5.99c1.47 0 2.78.5 3.82 1.49l2.88-2.88A9.66 9.66 0 0 0 12 2a10 10 0 0 0-8.95 5.5L6.4 10.1C7.19 7.74 9.4 6 12 6z"/>
+              </svg>
+            </span>
+            <span>使用 Google 帳戶登入</span>
+            <span class="arrow" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12h14m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span class="spinner" aria-hidden="true"></span>
+          </button>
+
+          <button class="provider-button wechat" type="button" data-provider="wechat">
+            <span class="provider-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9.75 4C4.9 4 1 7.13 1 11c0 2.2 1.25 4.16 3.2 5.44l-.8 2.38 2.77-1.38c1.12.36 2.33.56 3.58.56.3 0 .6-.01.89-.04a6.62 6.62 0 0 1-.27-1.86c0-3.7 3.18-6.74 7.25-7.09C16.52 6.1 13.47 4 9.75 4Zm-3 4.1a1.04 1.04 0 1 1 0 2.08 1.04 1.04 0 0 1 0-2.08Zm5.93 0a1.04 1.04 0 1 1 0 2.08 1.04 1.04 0 0 1 0-2.08Z"/>
+                <path d="M23 16.12c0-3.13-3.08-5.67-6.88-5.67s-6.88 2.54-6.88 5.67 3.08 5.67 6.88 5.67c1.04 0 2.03-.2 2.91-.53l2.17 1.08-.63-1.9C22.06 19.4 23 17.85 23 16.12Zm-9.08-.67a.87.87 0 1 1 0-1.74.87.87 0 0 1 0 1.74Zm4.63 0a.87.87 0 1 1 0-1.74.87.87 0 0 1 0 1.74Z"/>
+              </svg>
+            </span>
+            <span>使用微信登入</span>
+            <span class="arrow" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12h14m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span class="spinner" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <p class="status" id="authStatus" role="status" aria-live="polite">登入服務將在完成 OAuth 憑證設定後啟用。</p>
+        <p class="legal">繼續即表示你同意 AstroMind 的
+          <button type="button" data-dialog-title="使用條款">使用條款</button>與
+          <button type="button" data-dialog-title="隱私政策">隱私政策</button>。
+        </p>
+
+        <div class="privacy-note">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+            <rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+          <span>我們只會取得登入所需的基本公開資料，不會讀取你的 Gmail 郵件或微信聊天內容。</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>AstroMind © 2026</span>
+      <span>Private by design</span>
+    </footer>
+  </div>
+
+  <div class="dialog-backdrop" id="infoDialog" hidden>
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <h3 id="dialogTitle">說明</h3>
+      <p id="dialogCopy">正式內容將在上線前補齊。</p>
+      <button class="dialog-close" id="dialogClose" type="button">我知道了</button>
+    </section>
+  </div>
+
+  <script>
+    const statusElement = document.getElementById("authStatus");
+    const providerButtons = Array.from(document.querySelectorAll("[data-provider]"));
+    const dialog = document.getElementById("infoDialog");
+    const dialogTitle = document.getElementById("dialogTitle");
+    const dialogCopy = document.getElementById("dialogCopy");
+    const dialogClose = document.getElementById("dialogClose");
+    let lastDialogTrigger = null;
+
+    async function beginSignIn(button) {
+      const provider = button.dataset.provider;
+      const label = provider === "google" ? "Google" : "微信";
+      const authAdapter = window.ASTROMIND_AUTH;
+
+      providerButtons.forEach((item) => { item.disabled = true; });
+      button.classList.add("loading");
+      statusElement.dataset.tone = "";
+      statusElement.textContent = `正在連接 ${label}…`;
+
+      try {
+        if (authAdapter && typeof authAdapter.signIn === "function") {
+          await authAdapter.signIn(provider);
+          return;
+        }
+
+        await new Promise((resolve) => window.setTimeout(resolve, 650));
+        statusElement.dataset.tone = "error";
+        statusElement.textContent = `${label} 登入介面已完成；目前尚未配置 OAuth 憑證，因此不會傳送任何帳戶資料。`;
+      } catch (error) {
+        statusElement.dataset.tone = "error";
+        statusElement.textContent = `無法連接 ${label}，請稍後再試。`;
+      } finally {
+        button.classList.remove("loading");
+        providerButtons.forEach((item) => { item.disabled = false; });
+      }
+    }
+
+    providerButtons.forEach((button) => {
+      button.addEventListener("click", () => beginSignIn(button));
+    });
+
+    document.querySelectorAll("[data-dialog-title]").forEach((button) => {
+      button.addEventListener("click", () => {
+        lastDialogTrigger = button;
+        dialogTitle.textContent = button.dataset.dialogTitle;
+        dialogCopy.textContent = `${button.dataset.dialogTitle}的正式版本會在帳戶系統上線前完成法律審閱並公布。`;
+        dialog.hidden = false;
+        dialogClose.focus();
+      });
+    });
+
+    function closeDialog() {
+      dialog.hidden = true;
+      if (lastDialogTrigger) lastDialogTrigger.focus();
+    }
+
+    dialogClose.addEventListener("click", closeDialog);
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) closeDialog();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !dialog.hidden) closeDialog();
+    });
+  </script>
+</body>
+</html>

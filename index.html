@@ -114,7 +114,7 @@
     }
     .brand { color: inherit; font-size: 15px; font-weight: 600; letter-spacing: 0; }
     .nav-note { font-size: 11px; text-transform: uppercase; color: rgba(255,255,255,.75); }
-    .nav .btn { justify-self: end; }
+    .nav-actions { justify-self: end; display: flex; align-items: center; gap: 8px; }
     .hero-inner { position: relative; z-index: 2; width: 100%; padding: 148px 0 48px; }
     .hero-kicker, .eyebrow {
       margin: 0 0 20px;
@@ -214,7 +214,7 @@
       --btn-fill: #ffffff;
       --btn-fill-fg: var(--ink);
     }
-    .nav .btn { min-height: 40px; padding: 8px 20px; }
+    .nav .btn { min-height: 40px; padding: 8px 20px; text-decoration: none; }
     .btn:disabled { opacity: .42; cursor: not-allowed; transform: none; }
     .hero-meta {
       display: flex;
@@ -497,6 +497,7 @@
       .wrap, .nav { width: min(100% - 28px, 1180px); }
       .nav { grid-template-columns: 1fr auto; padding: 16px 0; }
       .nav-note { display: none; }
+      .nav-actions .community-nav-link { display: none; }
       .hero { min-height: 92svh; }
       .hero-media { background-position: 57% 56%; }
       .hero-inner { padding: 126px 0 28px; }
@@ -552,7 +553,11 @@
       <div class="nav">
         <div class="brand">AstroMind</div>
         <div class="nav-note">Personality · Career · Direction</div>
-        <button class="btn secondary" onclick="startTest()">开始测评</button>
+        <div class="nav-actions">
+          <a class="btn secondary community-nav-link" href="community.html">同频空间</a>
+          <a class="btn secondary" href="login.html">登入</a>
+          <button class="btn secondary" onclick="startTest()">开始测评</button>
+        </div>
       </div>
       <div class="hero-inner">
         <div class="wrap">
@@ -721,7 +726,7 @@
             <a class="badge" href="https://pubmed.ncbi.nlm.nih.gov/18649494/" target="_blank" rel="noreferrer">星盘识别与巴纳姆效应研究</a>
           </div>
         </div>
-        <div class="card"><h2>分享结果卡</h2><p class="muted" id="shareLine"></p><button class="btn secondary" onclick="window.print()">下载 / 打印 PDF</button></div>
+        <div class="card"><h2>分享结果卡</h2><p class="muted" id="shareLine"></p><div class="actions"><button class="btn" onclick="openSharePage()">生成分享卡</button><button class="btn secondary" onclick="openCommunity()">进入同频空间</button><button class="btn secondary" onclick="window.print()">打印 PDF</button></div></div>
       </div>
       <p class="small">本报告仅供自我反思、娱乐与个人成长参考，不构成医疗、心理、投资或专业职业建议。</p>
     </div>
@@ -744,7 +749,7 @@
     };
     const questions = [
       { type: "input", key: "nickname", title: "你希望报告怎样称呼你？", placeholder: "例如：Jia, 小林, Moon" },
-      { type: "input", key: "email", title: "留下 Gmail / Email，方便之后保存或发送报告。", placeholder: "例如：yourname@gmail.com，可先留空" },
+      { type: "input", key: "email", title: "留下 Email，方便之后保存或发送报告。", placeholder: "例如：name@example.com，可先留空" },
       { type: "choice", key: "age", title: "你的年龄范围是？", choices: ["18-21", "22-25", "26-30", "31-35", "36+"] },
       { type: "choice", key: "status", title: "你现在处在人生哪个阶段？", choices: ["学生", "刚毕业", "上班族", "创业者 / 老板", "想转换跑道", "还不确定"] },
       { type: "choice", key: "concern", title: "你现在最想解决的问题是？", choices: ["不知道什么工作适合我", "觉得现在卡住了", "想提高收入", "想开始创业", "想要更好的生活平衡", "想更了解自己"] },
@@ -1246,8 +1251,40 @@
         shareLine: `我的隐藏人格是「${title}」｜${mbti} × ${z}${interestCodes ? `｜兴趣 ${interestCodes}` : ""}｜${zodiac.traits.join(" · ")}`
       };
     }
+    function publicReportData(r){
+      return {
+        nickname: (state.nickname || "匿名用户").slice(0,24),
+        mbti: r.mbti,
+        zodiac: r.z,
+        title: r.title.slice(0,60),
+        interest: (r.interestCodes || "").slice(0,8),
+        traits: r.traits.slice(0,3),
+        generatedAt: new Date().toISOString()
+      };
+    }
+    function saveLatestPublicReport(r){
+      try {
+        localStorage.setItem("astromind.latestReport.v1", JSON.stringify(publicReportData(r)));
+      } catch {}
+    }
+    function publicPageUrl(pageName){
+      const r = report();
+      saveLatestPublicReport(r);
+      const data = publicReportData(r);
+      const params = new URLSearchParams({
+        nickname: data.nickname,
+        mbti: data.mbti,
+        zodiac: data.zodiac,
+        title: data.title,
+        interest: data.interest
+      });
+      return `${pageName}?${params.toString()}`;
+    }
+    function openSharePage(){ window.location.href = publicPageUrl("share.html"); }
+    function openCommunity(){ window.location.href = publicPageUrl("community.html"); }
     function showResult(){
       const r = report();
+      saveLatestPublicReport(r);
       document.getElementById("analyzing").classList.remove("active");
       document.getElementById("result").classList.remove("hidden");
       document.getElementById("archetype").textContent = r.title;
