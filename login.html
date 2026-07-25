@@ -606,7 +606,38 @@
     </section>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8/dist/umd/supabase.min.js"></script>
   <script>
+    const SUPABASE_URL = "https://mvvbithvillbnybjqwjh.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_VKNtLNhk1IJgDdpoK_Ht5w_CV2dBffI";
+    const supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      }
+    );
+
+    window.ASTROMIND_AUTH = {
+      async signIn(provider) {
+        if (provider !== "google") {
+          throw new Error("微信登入仍需完成微信開放平台的應用審核與 OAuth 設定。");
+        }
+
+        const redirectTo = new URL("login.html", window.location.href).href;
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo }
+        });
+
+        if (error) throw error;
+      }
+    };
+
     const statusElement = document.getElementById("authStatus");
     const providerButtons = Array.from(document.querySelectorAll("[data-provider]"));
     const dialog = document.getElementById("infoDialog");
@@ -636,7 +667,7 @@
         statusElement.textContent = `${label} 登入介面已完成；目前尚未配置 OAuth 憑證，因此不會傳送任何帳戶資料。`;
       } catch (error) {
         statusElement.dataset.tone = "error";
-        statusElement.textContent = `無法連接 ${label}，請稍後再試。`;
+        statusElement.textContent = error?.message || `無法連接 ${label}，請稍後再試。`;
       } finally {
         button.classList.remove("loading");
         providerButtons.forEach((item) => { item.disabled = false; });
@@ -646,6 +677,32 @@
     providerButtons.forEach((button) => {
       button.addEventListener("click", () => beginSignIn(button));
     });
+
+    async function showCurrentSession() {
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (error) {
+        statusElement.dataset.tone = "error";
+        statusElement.textContent = "無法確認登入狀態，請重新整理後再試。";
+        return;
+      }
+
+      const user = data.session?.user;
+      if (user) {
+        statusElement.dataset.tone = "";
+        statusElement.textContent = `已登入：${user.email || "Google 使用者"}`;
+      } else {
+        statusElement.textContent = "Google 安全登入已啟用。";
+      }
+    }
+
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        statusElement.dataset.tone = "";
+        statusElement.textContent = `登入成功：${session.user.email || "Google 使用者"}`;
+      }
+    });
+
+    showCurrentSession();
 
     document.querySelectorAll("[data-dialog-title]").forEach((button) => {
       button.addEventListener("click", () => {
